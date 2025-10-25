@@ -5,6 +5,7 @@ export default function VaccinationsLayout() {
   return (
     <Stack
       screenOptions={{
+        headerShown: false,
         headerStyle: {
           backgroundColor: Colors.surface,
         },

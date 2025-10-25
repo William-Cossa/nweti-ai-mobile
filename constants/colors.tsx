@@ -1,37 +1,38 @@
+// Colors.ts - Baseado no logo da aplicação
 const Colors = {
-  primary: "#4A90E2",
-  primaryDark: "#357ABD",
-  primaryLight: "#E3F2FD",
+  primary: "#4A7C8C",
+  primaryDark: "#3A6575",
+  primaryLight: "#E3F0F3",
 
-  success: "#5CB85C",
-  successLight: "#D4EDDA",
+  success: "#6DBDB6",
+  successLight: "#E0F5F3",
 
-  warning: "#F0AD4E",
-  warningLight: "#FFF3CD",
+  warning: "#F5B97A",
+  warningLight: "#FFF3E0",
 
-  danger: "#D9534F",
-  dangerLight: "#F8D7DA",
+  danger: "#E07A7A",
+  dangerLight: "#FDE8E8",
 
-  info: "#5BC0DE",
-  infoLight: "#D1ECF1",
+  info: "#4A7C8C",
+  infoLight: "#E3F0F3",
 
-  background: "#F8F9FA",
+  background: "#F9F9F9",
   surface: "#FFFFFF",
 
-  text: "#212529",
-  textSecondary: "#6C757D",
-  textLight: "#ADB5BD",
+  text: "#5D4037",
+  textSecondary: "#6D7A7A",
+  textLight: "#A5B3B3",
 
-  border: "#DEE2E6",
-  borderLight: "#E9ECEF",
+  border: "#E8E8E8",
+  borderLight: "#F0F0F0",
 
-  shadow: "rgba(0, 0, 0, 0.1)",
-  shadowDark: "rgba(0, 0, 0, 0.2)",
+  shadow: "rgba(93, 64, 55, 0.1)",
+  shadowDark: "rgba(93, 64, 55, 0.2)",
 
   gradient: {
-    primary: ["#4A90E2", "#357ABD"] as const,
-    success: ["#5CB85C", "#4A9D4A"] as const,
-    warm: ["#FF9A8B", "#FF6A88"] as const,
+    primary: ["#4A7C8C", "#3A6575"] as const,
+    success: ["#6DBDB6", "#5DB39F"] as const,
+    warm: ["#F5B97A", "#E07A7A"] as const,
   },
 };
 

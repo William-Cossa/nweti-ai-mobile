@@ -29,7 +29,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
   const login = useCallback(async (email: string, password: string) => {
     const mockUser: User = {
       id: Date.now().toString(),
-      name: "Maria Silva",
+      name: "William Cossa",
       email,
       phone: "+258 84 123 4567",
       createdAt: new Date().toISOString(),

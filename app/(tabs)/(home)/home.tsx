@@ -21,6 +21,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const { width } = Dimensions.get("window");
 const CARD_WIDTH = (width - 48) / 2;
@@ -75,260 +76,272 @@ export default function HomeScreen() {
 
   if (!selectedChild) {
     return (
-      <View style={styles.emptyContainer}>
-        <Baby size={64} color={Colors.textLight} />
-        <Text style={styles.emptyTitle}>Nenhuma criança registada</Text>
-        <Text style={styles.emptySubtitle}>
-          Adicione o perfil da sua criança para começar a acompanhar o
-          crescimento e saúde
-        </Text>
-        <TouchableOpacity
-          style={styles.addButton}
-          onPress={() => router.push("/child/add" as any)}
-        >
-          <LinearGradient
-            colors={Colors.gradient.primary}
-            style={styles.addButtonGradient}
+      <SafeAreaView style={styles.container}>
+        <View style={styles.emptyContainer}>
+          <Baby size={64} color={Colors.textLight} />
+          <Text style={styles.emptyTitle}>Nenhuma criança registada</Text>
+          <Text style={styles.emptySubtitle}>
+            Adicione o perfil da sua criança para começar a acompanhar o
+            crescimento e saúde
+          </Text>
+          <TouchableOpacity
+            style={styles.addButton}
+            onPress={() => router.push("/child/add" as any)}
           >
-            <Plus size={24} color="#FFFFFF" />
-            <Text style={styles.addButtonText}>Adicionar Criança</Text>
-          </LinearGradient>
-        </TouchableOpacity>
-      </View>
+            <LinearGradient
+              colors={Colors.gradient.primary}
+              style={styles.addButtonGradient}
+            >
+              <Plus size={24} color="#FFFFFF" />
+              <Text style={styles.addButtonText}>Adicionar Criança</Text>
+            </LinearGradient>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
     );
   }
 
   const latestGrowth = growthRecords[growthRecords.length - 1];
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <View style={styles.tipsSection}>
-        <View style={styles.tipsSectionHeader}>
-          <Text style={styles.tipsTitle}>Dicas de Saúde</Text>
-          <TouchableOpacity
-            onPress={() => router.push("/(tabs)/(home)/health-tips" as any)}
-          >
-            <Text style={styles.viewAllText}>Ver todas</Text>
-          </TouchableOpacity>
-        </View>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.tipsScroll}
-        >
-          {HEALTH_TIPS.slice(0, 5).map((tip) => {
-            const categoryColors: Record<string, string> = {
-              pregnancy: "#E91E63",
-              infant: "#9C27B0",
-              nutrition: "#FF9800",
-              development: "#4CAF50",
-              safety: "#F44336",
-            };
-            const bgColor = categoryColors[tip.category] || Colors.primary;
-
-            return (
-              <TouchableOpacity
-                key={tip.id}
-                style={styles.tipCard}
-                onPress={() => router.push("/(tabs)/(home)/health-tips" as any)}
-              >
-                <LinearGradient
-                  colors={[bgColor, bgColor + "CC"]}
-                  style={styles.tipBackground}
-                >
-                  <View style={styles.tipIconContainer}>
-                    <Text style={styles.tipIcon}>📚</Text>
-                  </View>
-                </LinearGradient>
-                <LinearGradient
-                  colors={["transparent", "rgba(0,0,0,0.9)"]}
-                  style={styles.tipGradient}
-                >
-                  <Text style={styles.tipTitle}>{tip.title}</Text>
-                  <Text style={styles.tipDescription} numberOfLines={2}>
-                    {tip.description}
-                  </Text>
-                </LinearGradient>
-              </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
-      </View>
-
-      <View style={styles.header}>
-        <View style={styles.childInfo}>
-          <View style={styles.childAvatar}>
-            <Baby size={32} color={Colors.primary} />
+    <SafeAreaView style={styles.container}>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.content}
+      >
+        <View style={styles.tipsSection}>
+          <View style={styles.tipsSectionHeader}>
+            <Text style={styles.tipsTitle}>Dicas de Saúde</Text>
+            <TouchableOpacity
+              onPress={() => router.push("/(tabs)/(home)/health-tips" as any)}
+            >
+              <Text style={styles.viewAllText}>Ver todas</Text>
+            </TouchableOpacity>
           </View>
-          <View style={styles.childDetails}>
-            <Text style={styles.childName}>{selectedChild.name}</Text>
-            <Text style={styles.childAge}>
-              {getChildAge(selectedChild.dateOfBirth)}
-            </Text>
-          </View>
-        </View>
-        {children.length > 1 && (
-          <TouchableOpacity
-            style={styles.switchButton}
-            onPress={() => router.push("/child/select" as any)}
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.tipsScroll}
           >
-            <Text style={styles.switchButtonText}>Trocar</Text>
-          </TouchableOpacity>
-        )}
-      </View>
+            {HEALTH_TIPS.slice(0, 5).map((tip) => {
+              const categoryColors: Record<string, string> = {
+                pregnancy: "#E91E63",
+                infant: "#9C27B0",
+                nutrition: "#FF9800",
+                development: "#4CAF50",
+                safety: "#F44336",
+              };
+              const bgColor = categoryColors[tip.category] || Colors.primary;
 
-      {latestGrowth && (
-        <View style={styles.statsCard}>
-          <LinearGradient
-            colors={Colors.gradient.primary}
-            style={styles.statsGradient}
-          >
-            <Text style={styles.statsTitle}>Última Medição</Text>
-            <View style={styles.statsRow}>
-              <View style={styles.statItem}>
-                <Text style={styles.statValue}>{latestGrowth.weight} kg</Text>
-                <Text style={styles.statLabel}>Peso</Text>
-              </View>
-              <View style={styles.statDivider} />
-              <View style={styles.statItem}>
-                <Text style={styles.statValue}>{latestGrowth.height} cm</Text>
-                <Text style={styles.statLabel}>Altura</Text>
-              </View>
+              return (
+                <TouchableOpacity
+                  key={tip.id}
+                  style={styles.tipCard}
+                  onPress={() =>
+                    router.push("/(tabs)/(home)/health-tips" as any)
+                  }
+                >
+                  <LinearGradient
+                    colors={[bgColor, bgColor + "CC"]}
+                    style={styles.tipBackground}
+                  >
+                    <View style={styles.tipIconContainer}>
+                      <Text style={styles.tipIcon}>📚</Text>
+                    </View>
+                  </LinearGradient>
+                  <LinearGradient
+                    colors={["transparent", "rgba(0,0,0,0.9)"]}
+                    style={styles.tipGradient}
+                  >
+                    <Text style={styles.tipTitle}>{tip.title}</Text>
+                    <Text style={styles.tipDescription} numberOfLines={2}>
+                      {tip.description}
+                    </Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        </View>
+
+        <View style={styles.header}>
+          <View style={styles.childInfo}>
+            <View style={styles.childAvatar}>
+              <Baby size={32} color={Colors.primary} />
             </View>
-            <Text style={styles.statsDate}>
-              {new Date(latestGrowth.date).toLocaleDateString("pt-PT")}
-            </Text>
-          </LinearGradient>
+            <View style={styles.childDetails}>
+              <Text style={styles.childName}>{selectedChild.name}</Text>
+              <Text style={styles.childAge}>
+                {getChildAge(selectedChild.dateOfBirth)}
+              </Text>
+            </View>
+          </View>
+          {children.length > 1 && (
+            <TouchableOpacity
+              style={styles.switchButton}
+              onPress={() => router.push("/child/select" as any)}
+            >
+              <Text style={styles.switchButtonText}>Trocar</Text>
+            </TouchableOpacity>
+          )}
         </View>
-      )}
 
-      <View style={styles.quickActions}>
-        <TouchableOpacity
-          style={styles.actionCard}
-          onPress={() => router.push("/(tabs)/(home)/growth" as any)}
-        >
-          <View
-            style={[
-              styles.actionIcon,
-              { backgroundColor: Colors.primaryLight },
-            ]}
-          >
-            <TrendingUp size={24} color={Colors.primary} />
-          </View>
-          <Text style={styles.actionTitle}>Crescimento</Text>
-          <Text style={styles.actionSubtitle}>
-            {growthRecords.length}{" "}
-            {growthRecords.length === 1 ? "registo" : "registos"}
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.actionCard}
-          onPress={() => router.push("/(tabs)/vaccinations" as any)}
-        >
-          <View
-            style={[
-              styles.actionIcon,
-              { backgroundColor: Colors.successLight },
-            ]}
-          >
-            <Calendar size={24} color={Colors.success} />
-          </View>
-          <Text style={styles.actionTitle}>Vacinas</Text>
-          <Text style={styles.actionSubtitle}>Ver calendário</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.actionCard}
-          onPress={() => router.push("/(tabs)/(home)/prescriptions" as any)}
-        >
-          <View
-            style={[
-              styles.actionIcon,
-              { backgroundColor: Colors.warningLight },
-            ]}
-          >
-            <Pill size={24} color={Colors.warning} />
-          </View>
-          <Text style={styles.actionTitle}>Prescrições</Text>
-          <Text style={styles.actionSubtitle}>
-            {prescriptions.length}{" "}
-            {prescriptions.length === 1 ? "activa" : "activas"}
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.actionCard}
-          onPress={() => router.push("/(tabs)/(home)/recommendations" as any)}
-        >
-          <View
-            style={[styles.actionIcon, { backgroundColor: Colors.infoLight }]}
-          >
-            <Lightbulb size={24} color={Colors.info} />
-            {unreadRecommendations > 0 && (
-              <View style={styles.badge}>
-                <Text style={styles.badgeText}>{unreadRecommendations}</Text>
+        {latestGrowth && (
+          <View style={styles.statsCard}>
+            <LinearGradient
+              colors={Colors.gradient.primary}
+              style={styles.statsGradient}
+            >
+              <Text style={styles.statsTitle}>Última Medição</Text>
+              <View style={styles.statsRow}>
+                <View style={styles.statItem}>
+                  <Text style={styles.statValue}>{latestGrowth.weight} kg</Text>
+                  <Text style={styles.statLabel}>Peso</Text>
+                </View>
+                <View style={styles.statDivider} />
+                <View style={styles.statItem}>
+                  <Text style={styles.statValue}>{latestGrowth.height} cm</Text>
+                  <Text style={styles.statLabel}>Altura</Text>
+                </View>
               </View>
-            )}
+              <Text style={styles.statsDate}>
+                {new Date(latestGrowth.date).toLocaleDateString("pt-PT")}
+              </Text>
+            </LinearGradient>
           </View>
-          <Text style={styles.actionTitle}>Dicas</Text>
-          <Text style={styles.actionSubtitle}>Recomendações</Text>
-        </TouchableOpacity>
+        )}
 
-        <TouchableOpacity
-          style={styles.actionCard}
-          onPress={() => router.push("/(tabs)/(home)/reminders" as any)}
-        >
-          <View
-            style={[styles.actionIcon, { backgroundColor: Colors.dangerLight }]}
-          >
-            <Bell size={24} color={Colors.danger} />
-            {pendingReminders > 0 && (
-              <View style={styles.badge}>
-                <Text style={styles.badgeText}>{pendingReminders}</Text>
-              </View>
-            )}
-          </View>
-          <Text style={styles.actionTitle}>Lembretes</Text>
-          <Text style={styles.actionSubtitle}>
-            {pendingReminders}{" "}
-            {pendingReminders === 1 ? "pendente" : "pendentes"}
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.actionCard}
-          onPress={() => router.push("/(tabs)/(home)/dashboard" as any)}
-        >
-          <View
-            style={[
-              styles.actionIcon,
-              { backgroundColor: Colors.primaryLight },
-            ]}
-          >
-            <BarChart3 size={24} color={Colors.primary} />
-          </View>
-          <Text style={styles.actionTitle}>Painel</Text>
-          <Text style={styles.actionSubtitle}>Estatísticas</Text>
-        </TouchableOpacity>
-      </View>
-
-      {!latestGrowth && (
-        <View style={styles.promptCard}>
-          <TrendingUp size={32} color={Colors.primary} />
-          <Text style={styles.promptTitle}>Adicione a primeira medição</Text>
-          <Text style={styles.promptSubtitle}>
-            Comece a acompanhar o crescimento do seu filho
-          </Text>
+        <View style={styles.quickActions}>
           <TouchableOpacity
-            style={styles.promptButton}
+            style={styles.actionCard}
             onPress={() => router.push("/(tabs)/(home)/growth" as any)}
           >
-            <Text style={styles.promptButtonText}>Adicionar Medição</Text>
+            <View
+              style={[
+                styles.actionIcon,
+                { backgroundColor: Colors.primaryLight },
+              ]}
+            >
+              <TrendingUp size={24} color={Colors.primary} />
+            </View>
+            <Text style={styles.actionTitle}>Crescimento</Text>
+            <Text style={styles.actionSubtitle}>
+              {growthRecords.length}{" "}
+              {growthRecords.length === 1 ? "registo" : "registos"}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.actionCard}
+            onPress={() => router.push("/(tabs)/vaccinations" as any)}
+          >
+            <View
+              style={[
+                styles.actionIcon,
+                { backgroundColor: Colors.successLight },
+              ]}
+            >
+              <Calendar size={24} color={Colors.success} />
+            </View>
+            <Text style={styles.actionTitle}>Vacinas</Text>
+            <Text style={styles.actionSubtitle}>Ver calendário</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.actionCard}
+            onPress={() => router.push("/(tabs)/(home)/prescriptions" as any)}
+          >
+            <View
+              style={[
+                styles.actionIcon,
+                { backgroundColor: Colors.warningLight },
+              ]}
+            >
+              <Pill size={24} color={Colors.warning} />
+            </View>
+            <Text style={styles.actionTitle}>Prescrições</Text>
+            <Text style={styles.actionSubtitle}>
+              {prescriptions.length}{" "}
+              {prescriptions.length === 1 ? "activa" : "activas"}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.actionCard}
+            onPress={() => router.push("/(tabs)/(home)/recommendations" as any)}
+          >
+            <View
+              style={[styles.actionIcon, { backgroundColor: Colors.infoLight }]}
+            >
+              <Lightbulb size={24} color={Colors.info} />
+              {unreadRecommendations > 0 && (
+                <View style={styles.badge}>
+                  <Text style={styles.badgeText}>{unreadRecommendations}</Text>
+                </View>
+              )}
+            </View>
+            <Text style={styles.actionTitle}>Dicas</Text>
+            <Text style={styles.actionSubtitle}>Recomendações</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.actionCard}
+            onPress={() => router.push("/(tabs)/(home)/reminders" as any)}
+          >
+            <View
+              style={[
+                styles.actionIcon,
+                { backgroundColor: Colors.dangerLight },
+              ]}
+            >
+              <Bell size={24} color={Colors.danger} />
+              {pendingReminders > 0 && (
+                <View style={styles.badge}>
+                  <Text style={styles.badgeText}>{pendingReminders}</Text>
+                </View>
+              )}
+            </View>
+            <Text style={styles.actionTitle}>Lembretes</Text>
+            <Text style={styles.actionSubtitle}>
+              {pendingReminders}{" "}
+              {pendingReminders === 1 ? "pendente" : "pendentes"}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.actionCard}
+            onPress={() => router.push("/(tabs)/(home)/dashboard" as any)}
+          >
+            <View
+              style={[
+                styles.actionIcon,
+                { backgroundColor: Colors.primaryLight },
+              ]}
+            >
+              <BarChart3 size={24} color={Colors.primary} />
+            </View>
+            <Text style={styles.actionTitle}>Painel</Text>
+            <Text style={styles.actionSubtitle}>Estatísticas</Text>
           </TouchableOpacity>
         </View>
-      )}
-    </ScrollView>
+
+        {!latestGrowth && (
+          <View style={styles.promptCard}>
+            <TrendingUp size={32} color={Colors.primary} />
+            <Text style={styles.promptTitle}>Adicione a primeira medição</Text>
+            <Text style={styles.promptSubtitle}>
+              Comece a acompanhar o crescimento do seu filho
+            </Text>
+            <TouchableOpacity
+              style={styles.promptButton}
+              onPress={() => router.push("/(tabs)/(home)/growth" as any)}
+            >
+              <Text style={styles.promptButtonText}>Adicionar Medição</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 

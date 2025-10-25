@@ -1,7 +1,7 @@
 import Colors from "@/constants/colors";
 import { useAuth } from "@/contexts/AuthContext";
 import { useChild } from "@/contexts/ChildContext";
-import { Stack, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
 import { Baby, Heart, LogOut, Settings, User } from "lucide-react-native";
 import {
   Alert,
@@ -11,6 +11,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -32,8 +33,7 @@ export default function ProfileScreen() {
   };
 
   return (
-    <>
-      <Stack.Screen options={{ title: "Perfil" }} />
+    <SafeAreaView style={styles.container}>
       <ScrollView
         style={styles.container}
         contentContainerStyle={styles.content}
@@ -103,7 +103,7 @@ export default function ProfileScreen() {
 
         <Text style={styles.version}>Versão 1.0.0</Text>
       </ScrollView>
-    </>
+    </SafeAreaView>
   );
 }
 

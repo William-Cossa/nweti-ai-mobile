@@ -1,3 +1,4 @@
+// import DateOfBirthInput from "@/components/DateOfBirthInput";
 import Colors from "@/constants/colors";
 import { useChild } from "@/contexts/ChildContext";
 import { LinearGradient } from "expo-linear-gradient";
@@ -15,12 +16,14 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function AddChildScreen() {
   const router = useRouter();
   const { addChild } = useChild();
   const [name, setName] = useState("");
-  const [dateOfBirth, setDateOfBirth] = useState("");
+  const [dateOfBirth, setDateOfBirth] = useState<Date | null>(null);
+
   const [gender, setGender] = useState<"male" | "female">("male");
   const [weight, setWeight] = useState("");
   const [height, setHeight] = useState("");
@@ -35,7 +38,7 @@ export default function AddChildScreen() {
     const newChild = {
       id: Date.now().toString(),
       name,
-      dateOfBirth,
+      dateOfBirth: dateOfBirth?.toISOString() || "",
       gender,
       weight: parseFloat(weight),
       height: parseFloat(height),
@@ -50,122 +53,135 @@ export default function AddChildScreen() {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-    >
-      <ScrollView contentContainerStyle={styles.content}>
-        <View style={styles.iconContainer}>
-          <View style={styles.icon}>
-            <Baby size={48} color={Colors.primary} />
+    <SafeAreaView style={styles.safeArea}>
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0} // 👈 evita o overlap do teclado
+      >
+        <ScrollView
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled" // 👈 permite tocar fora do teclado sem fechar inputs
+        >
+          <View style={styles.iconContainer}>
+            <View style={styles.icon}>
+              <Baby size={48} color={Colors.primary} />
+            </View>
           </View>
-        </View>
 
-        <Text style={styles.label}>Nome da Criança *</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Nome completo"
-          placeholderTextColor={Colors.textLight}
-          value={name}
-          onChangeText={setName}
-        />
+          <Text style={styles.label}>Nome da Criança *</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Nome completo"
+            placeholderTextColor={Colors.textLight}
+            value={name}
+            onChangeText={setName}
+            returnKeyType="next"
+          />
 
-        <Text style={styles.label}>Data de Nascimento *</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="DD/MM/AAAA"
-          placeholderTextColor={Colors.textLight}
-          value={dateOfBirth}
-          onChangeText={setDateOfBirth}
-        />
+          <Text style={styles.label}>Data de Nascimento *</Text>
 
-        <Text style={styles.label}>Sexo *</Text>
-        <View style={styles.genderContainer}>
-          <TouchableOpacity
-            style={[
-              styles.genderButton,
-              gender === "male" && styles.genderButtonActive,
-            ]}
-            onPress={() => setGender("male")}
-          >
-            <Text
+          <TextInput
+            style={styles.input}
+            placeholder="DD/MM/AAAA"
+            placeholderTextColor={Colors.textLight}
+          />
+
+          <Text style={styles.label}>Sexo *</Text>
+          <View style={styles.genderContainer}>
+            <TouchableOpacity
               style={[
-                styles.genderText,
-                gender === "male" && styles.genderTextActive,
+                styles.genderButton,
+                gender === "male" && styles.genderButtonActive,
               ]}
+              onPress={() => setGender("male")}
             >
-              Masculino
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[
-              styles.genderButton,
-              gender === "female" && styles.genderButtonActive,
-            ]}
-            onPress={() => setGender("female")}
-          >
-            <Text
+              <Text
+                style={[
+                  styles.genderText,
+                  gender === "male" && styles.genderTextActive,
+                ]}
+              >
+                Masculino
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
               style={[
-                styles.genderText,
-                gender === "female" && styles.genderTextActive,
+                styles.genderButton,
+                gender === "female" && styles.genderButtonActive,
               ]}
+              onPress={() => setGender("female")}
             >
-              Feminino
-            </Text>
+              <Text
+                style={[
+                  styles.genderText,
+                  gender === "female" && styles.genderTextActive,
+                ]}
+              >
+                Feminino
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          <Text style={styles.label}>Peso Atual (kg) *</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Ex: 3.5"
+            placeholderTextColor={Colors.textLight}
+            value={weight}
+            onChangeText={setWeight}
+            keyboardType="decimal-pad"
+            returnKeyType="next"
+          />
+
+          <Text style={styles.label}>Altura Atual (cm) *</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Ex: 50"
+            placeholderTextColor={Colors.textLight}
+            value={height}
+            onChangeText={setHeight}
+            keyboardType="decimal-pad"
+            returnKeyType="next"
+          />
+
+          <Text style={styles.label}>Observações Médicas</Text>
+          <TextInput
+            style={[styles.input, styles.textArea]}
+            placeholder="Alergias, condições especiais, etc."
+            placeholderTextColor={Colors.textLight}
+            value={medicalNotes}
+            onChangeText={setMedicalNotes}
+            multiline
+            numberOfLines={4}
+          />
+
+          <TouchableOpacity style={styles.button} onPress={handleSave}>
+            <LinearGradient
+              colors={Colors.gradient.primary}
+              style={styles.buttonGradient}
+            >
+              <Text style={styles.buttonText}>Guardar</Text>
+            </LinearGradient>
           </TouchableOpacity>
-        </View>
-
-        <Text style={styles.label}>Peso Atual (kg) *</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Ex: 3.5"
-          placeholderTextColor={Colors.textLight}
-          value={weight}
-          onChangeText={setWeight}
-          keyboardType="decimal-pad"
-        />
-
-        <Text style={styles.label}>Altura Atual (cm) *</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Ex: 50"
-          placeholderTextColor={Colors.textLight}
-          value={height}
-          onChangeText={setHeight}
-          keyboardType="decimal-pad"
-        />
-
-        <Text style={styles.label}>Observações Médicas</Text>
-        <TextInput
-          style={[styles.input, styles.textArea]}
-          placeholder="Alergias, condições especiais, etc."
-          placeholderTextColor={Colors.textLight}
-          value={medicalNotes}
-          onChangeText={setMedicalNotes}
-          multiline
-          numberOfLines={4}
-        />
-
-        <TouchableOpacity style={styles.button} onPress={handleSave}>
-          <LinearGradient
-            colors={Colors.gradient.primary}
-            style={styles.buttonGradient}
-          >
-            <Text style={styles.buttonText}>Guardar</Text>
-          </LinearGradient>
-        </TouchableOpacity>
-      </ScrollView>
-    </KeyboardAvoidingView>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
     backgroundColor: Colors.background,
   },
+  container: {
+    flex: 1,
+  },
   content: {
     padding: 24,
+    paddingBottom: 60, // 👈 garante espaço extra no fim
   },
   iconContainer: {
     alignItems: "center",

@@ -1,11 +1,9 @@
 import Colors from "@/constants/colors";
 import { useChild } from "@/contexts/ChildContext";
-import { createRorkTool, useRorkAgent } from "@rork/toolkit-sdk";
 import { Stack } from "expo-router";
 import { Bot, Send, User as UserIcon } from "lucide-react-native";
 import { useEffect, useRef, useState } from "react";
 import {
-  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -15,47 +13,14 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { z } from "zod";
 
 export default function ChatScreen() {
   const [input, setInput] = useState("");
+  const [messages, setMessages] = useState<
+    { id: string; role: "user" | "assistant"; text: string }[]
+  >([]);
   const scrollViewRef = useRef<ScrollView>(null);
   const { selectedChild, addRecommendation } = useChild();
-
-  const { messages, sendMessage } = useRorkAgent({
-    tools: {
-      createRecommendation: createRorkTool({
-        description: "Criar uma recomendação de saúde para a criança",
-        zodSchema: z.object({
-          category: z
-            .enum(["nutrition", "sleep", "hygiene", "activity", "development"])
-            .describe("Categoria da recomendação"),
-          title: z.string().describe("Título da recomendação"),
-          description: z.string().describe("Descrição detalhada"),
-          priority: z.enum(["low", "medium", "high"]).describe("Prioridade"),
-        }),
-        execute(params) {
-          if (selectedChild) {
-            addRecommendation({
-              id: Date.now().toString(),
-              childId: selectedChild.id,
-              category: params.category,
-              title: params.title,
-              description: params.description,
-              priority: params.priority,
-              createdAt: new Date().toISOString(),
-              isRead: false,
-            });
-          }
-          return "Recomendação criada com sucesso";
-        },
-      }),
-    },
-  });
-
-  useEffect(() => {
-    scrollViewRef.current?.scrollToEnd({ animated: true });
-  }, [messages]);
 
   const handleSend = () => {
     if (!input.trim()) return;
@@ -66,7 +31,20 @@ export default function ChatScreen() {
         } com ${getChildAge(selectedChild.dateOfBirth)}. `
       : "";
 
-    sendMessage(context + input);
+    const userMessage = {
+      id: Date.now().toString(),
+      role: "user" as const,
+      text: context + input,
+    };
+
+    // Simula resposta do "assistente"
+    const assistantMessage = {
+      id: (Date.now() + 1).toString(),
+      role: "assistant" as const,
+      text: "Esta é uma resposta automática. Substitua com sua lógica de AI.",
+    };
+
+    setMessages((prev) => [...prev, userMessage, assistantMessage]);
     setInput("");
   };
 
@@ -88,6 +66,10 @@ export default function ChatScreen() {
     }
     return `${years}a ${remainingMonths}m`;
   };
+
+  useEffect(() => {
+    scrollViewRef.current?.scrollToEnd({ animated: true });
+  }, [messages]);
 
   return (
     <>
@@ -162,41 +144,7 @@ export default function ChatScreen() {
                   {message.role === "user" ? "Você" : "Assistente"}
                 </Text>
               </View>
-              {message.parts.map((part, index) => {
-                if (part.type === "text") {
-                  return (
-                    <Text key={index} style={styles.messageText}>
-                      {part.text}
-                    </Text>
-                  );
-                }
-                if (part.type === "tool") {
-                  if (
-                    part.state === "input-streaming" ||
-                    part.state === "input-available"
-                  ) {
-                    return (
-                      <View key={index} style={styles.toolContainer}>
-                        <ActivityIndicator
-                          size="small"
-                          color={Colors.primary}
-                        />
-                        <Text style={styles.toolText}>A processar...</Text>
-                      </View>
-                    );
-                  }
-                  if (part.state === "output-available") {
-                    return (
-                      <View key={index} style={styles.toolContainer}>
-                        <Text style={styles.toolText}>
-                          ✓ Recomendação criada
-                        </Text>
-                      </View>
-                    );
-                  }
-                }
-                return null;
-              })}
+              <Text style={styles.messageText}>{message.text}</Text>
             </View>
           ))}
         </ScrollView>
@@ -231,23 +179,13 @@ export default function ChatScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
-  messagesContainer: {
-    flex: 1,
-  },
-  messagesContent: {
-    padding: 16,
-  },
-  emptyState: {
-    alignItems: "center",
-    paddingVertical: 48,
-  },
+  container: { flex: 1, backgroundColor: Colors.background },
+  messagesContainer: { flex: 1 },
+  messagesContent: { padding: 16 },
+  emptyState: { alignItems: "center", paddingVertical: 48 },
   emptyTitle: {
     fontSize: 24,
-    fontWeight: "700" as const,
+    fontWeight: "700",
     color: Colors.text,
     marginTop: 16,
     marginBottom: 8,
@@ -271,16 +209,8 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 20,
   },
-  suggestionText: {
-    color: Colors.primary,
-    fontSize: 14,
-    fontWeight: "600" as const,
-  },
-  messageContainer: {
-    marginBottom: 16,
-    padding: 12,
-    borderRadius: 12,
-  },
+  suggestionText: { color: Colors.primary, fontSize: 14, fontWeight: "600" },
+  messageContainer: { marginBottom: 16, padding: 12, borderRadius: 12 },
   userMessage: {
     backgroundColor: Colors.primaryLight,
     alignSelf: "flex-end",
@@ -302,30 +232,8 @@ const styles = StyleSheet.create({
     gap: 8,
     marginBottom: 8,
   },
-  messageRole: {
-    fontSize: 12,
-    fontWeight: "700" as const,
-    color: Colors.textSecondary,
-  },
-  messageText: {
-    fontSize: 16,
-    color: Colors.text,
-    lineHeight: 24,
-  },
-  toolContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    marginTop: 8,
-    padding: 8,
-    backgroundColor: Colors.successLight,
-    borderRadius: 8,
-  },
-  toolText: {
-    fontSize: 14,
-    color: Colors.success,
-    fontWeight: "600" as const,
-  },
+  messageRole: { fontSize: 12, fontWeight: "700", color: Colors.textSecondary },
+  messageText: { fontSize: 16, color: Colors.text, lineHeight: 24 },
   inputContainer: {
     flexDirection: "row",
     padding: 16,
@@ -352,7 +260,5 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  sendButtonDisabled: {
-    backgroundColor: Colors.borderLight,
-  },
+  sendButtonDisabled: { backgroundColor: Colors.borderLight },
 });
