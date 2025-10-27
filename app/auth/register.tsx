@@ -1,9 +1,10 @@
 import Colors from "@/constants/colors";
 import { useAuth } from "@/contexts/AuthContext";
+import { testConnection } from "@/src/services/testConnection";
 import { LinearGradient } from "expo-linear-gradient";
 import { Stack, useRouter } from "expo-router";
 import { Heart, Lock, Mail, Phone, User } from "lucide-react-native";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -22,11 +23,16 @@ export default function RegisterScreen() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  const [address, setAddress] = useState("");
+  const [role, setRole] = useState("MOTTHER");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
+  useEffect(() => {
+    testConnection();
+  }, []);
   const handleRegister = async () => {
     if (!name || !email || !phone || !password || !confirmPassword) {
       setError("Por favor, preencha todos os campos");
@@ -47,10 +53,11 @@ export default function RegisterScreen() {
     setError("");
 
     try {
-      await register(name, email, phone, password);
+      await register(name, email, phone, password, role);
       router.replace("/home");
     } catch (err) {
-      setError("Erro ao criar conta. Tente novamente.");
+      console.log(err);
+      setError(`Erro ao criar conta. Tente novamente`);
     } finally {
       setIsLoading(false);
     }
@@ -113,7 +120,7 @@ export default function RegisterScreen() {
                 onChangeText={setEmail}
                 keyboardType="email-address"
                 autoCapitalize="none"
-                autoComplete="email"
+                // autoComplete="email"
               />
             </View>
 
@@ -132,6 +139,22 @@ export default function RegisterScreen() {
                 keyboardType="phone-pad"
               />
             </View>
+            {/* <View style={styles.inputContainer}>
+              <Hotel
+                size={20}
+                color={Colors.textSecondary}
+                style={styles.inputIcon}
+              />
+
+              <TextInput
+                style={styles.input}
+                placeholder="Endereço"
+                placeholderTextColor={Colors.textLight}
+                value={address}
+                onChangeText={setAddress}
+                autoCapitalize="words"
+              />
+            </View> */}
 
             <View style={styles.inputContainer}>
               <Lock
@@ -145,7 +168,7 @@ export default function RegisterScreen() {
                 placeholderTextColor={Colors.textLight}
                 value={password}
                 onChangeText={setPassword}
-                secureTextEntry
+                // secureTextEntry
                 autoCapitalize="none"
               />
             </View>
@@ -162,7 +185,7 @@ export default function RegisterScreen() {
                 placeholderTextColor={Colors.textLight}
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
-                secureTextEntry
+                // secureTextEntry
                 autoCapitalize="none"
               />
             </View>

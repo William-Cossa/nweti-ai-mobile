@@ -1,6 +1,7 @@
 import Colors from "@/constants/colors";
 import { useChild } from "@/contexts/ChildContext";
 import { Plus } from "lucide-react-native";
+import { Spinner } from "@/components/ui/spinner";
 import { useState } from "react";
 import {
   ScrollView,
@@ -18,11 +19,19 @@ import {
 } from "@/components/Growth";
 
 export default function GrowthScreen() {
-  const { selectedChild, getChildGrowthRecords, addGrowthRecord } = useChild();
-  const growthRecords = selectedChild
-    ? getChildGrowthRecords(selectedChild.id)
-    : [];
+  const {
+    selectedChild,
+    getChildGrowthRecords,
+    addGrowthRecord,
+    isLoading,
+    isAddingGrowthRecord,
+  } = useChild();
+  const growthRecords = selectedChild ? getChildGrowthRecords() : [];
   const [modalVisible, setModalVisible] = useState(false);
+
+  if (isLoading) {
+    return <Spinner />;
+  }
 
   if (!selectedChild) {
     return (
@@ -39,9 +48,7 @@ export default function GrowthScreen() {
   const handleAddRecord = (weight: number, height: number, notes: string) => {
     if (selectedChild) {
       addGrowthRecord({
-        id: Date.now().toString(),
         childId: selectedChild.id,
-        date: new Date().toISOString(),
         weight,
         height,
         notes,
@@ -78,6 +85,7 @@ export default function GrowthScreen() {
 
       <AddGrowthModal
         visible={modalVisible}
+        isSaving={isAddingGrowthRecord}
         onClose={() => setModalVisible(false)}
         onSave={handleAddRecord}
       />

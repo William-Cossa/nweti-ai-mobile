@@ -11,9 +11,10 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
+import * as childrenService from "../src/services/children";
+import * as growthService from "../src/services/growth";
+
 const STORAGE_KEYS = {
-  CHILDREN: "@health_app_children",
-  GROWTH_RECORDS: "@health_app_growth",
   VACCINATIONS: "@health_app_vaccinations",
   PRESCRIPTIONS: "@health_app_prescriptions",
   RECOMMENDATIONS: "@health_app_recommendations",
@@ -26,18 +27,7 @@ export const [ChildProvider, useChild] = createContextHook(() => {
 
   const childrenQuery = useQuery({
     queryKey: ["children"],
-    queryFn: async () => {
-      const stored = await AsyncStorage.getItem(STORAGE_KEYS.CHILDREN);
-      return stored ? JSON.parse(stored) : [];
-    },
-  });
-
-  const growthQuery = useQuery({
-    queryKey: ["growth"],
-    queryFn: async () => {
-      const stored = await AsyncStorage.getItem(STORAGE_KEYS.GROWTH_RECORDS);
-      return stored ? JSON.parse(stored) : [];
-    },
+    queryFn: childrenService.getAllChildren,
   });
 
   const vaccinationsQuery = useQuery({
@@ -76,6 +66,14 @@ export const [ChildProvider, useChild] = createContextHook(() => {
     () => childrenQuery.data || [],
     [childrenQuery.data]
   );
+  const selectedChild =
+    children.find((c: Child) => c.id === selectedChildId) || children[0];
+
+  const growthQuery = useQuery({
+    queryKey: ["growth", selectedChild?.id],
+    queryFn: () => growthService.getGrowthRecords(selectedChild!.id),
+    enabled: !!selectedChild,
+  });
   const growthRecords = useMemo(
     () => growthQuery.data || [],
     [growthQuery.data]
@@ -97,9 +95,6 @@ export const [ChildProvider, useChild] = createContextHook(() => {
     [remindersQuery.data]
   );
 
-  const selectedChild =
-    children.find((c: Child) => c.id === selectedChildId) || children[0];
-
   useEffect(() => {
     if (children.length > 0 && !selectedChildId) {
       setSelectedChildId(children[0].id);
@@ -107,46 +102,26 @@ export const [ChildProvider, useChild] = createContextHook(() => {
   }, [children, selectedChildId]);
 
   const addChildMutation = useMutation({
-    mutationFn: async (child: Child) => {
-      const updated = [...children, child];
-      await AsyncStorage.setItem(
-        STORAGE_KEYS.CHILDREN,
-        JSON.stringify(updated)
-      );
-      return updated;
-    },
+    mutationFn: childrenService.createChild,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["children"] });
     },
   });
 
   const updateChildMutation = useMutation({
-    mutationFn: async (child: Child) => {
-      const updated = children.map((c: Child) =>
-        c.id === child.id ? child : c
-      );
-      await AsyncStorage.setItem(
-        STORAGE_KEYS.CHILDREN,
-        JSON.stringify(updated)
-      );
-      return updated;
-    },
+    mutationFn: (child: Child) => childrenService.updateChild(child.id, child),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["children"] });
     },
   });
 
   const addGrowthRecordMutation = useMutation({
-    mutationFn: async (record: GrowthRecord) => {
-      const updated = [...growthRecords, record];
-      await AsyncStorage.setItem(
-        STORAGE_KEYS.GROWTH_RECORDS,
-        JSON.stringify(updated)
-      );
-      return updated;
-    },
+    mutationFn: (record: GrowthRecord) =>
+      growthService.addGrowthRecord(selectedChild!.id, record),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["growth"] });
+      queryClient.invalidateQueries({
+        queryKey: ["growth", selectedChild?.id],
+      });
     },
   });
 
@@ -314,17 +289,12 @@ export const [ChildProvider, useChild] = createContextHook(() => {
     },
   });
 
-  const getChildGrowthRecords = useCallback(
-    (childId: string) => {
-      return growthRecords
-        .filter((r: GrowthRecord) => r.childId === childId)
-        .sort(
-          (a: GrowthRecord, b: GrowthRecord) =>
-            new Date(a.date).getTime() - new Date(b.date).getTime()
-        );
-    },
-    [growthRecords]
-  );
+  const getChildGrowthRecords = useCallback(() => {
+    return growthRecords.sort(
+      (a: GrowthRecord, b: GrowthRecord) =>
+        new Date(a.date!).getTime() - new Date(b.date!).getTime()
+    );
+  }, [growthRecords]);
 
   const getChildVaccinations = useCallback(
     (childId: string) => {
@@ -377,6 +347,7 @@ export const [ChildProvider, useChild] = createContextHook(() => {
       addChild: addChildMutation.mutate,
       updateChild: updateChildMutation.mutate,
       addGrowthRecord: addGrowthRecordMutation.mutate,
+      isAddingGrowthRecord: addGrowthRecordMutation.isPending,
       addVaccination: addVaccinationMutation.mutate,
       updateVaccination: updateVaccinationMutation.mutate,
       addPrescription: addPrescriptionMutation.mutate,
@@ -408,6 +379,7 @@ export const [ChildProvider, useChild] = createContextHook(() => {
       addChildMutation.mutate,
       updateChildMutation.mutate,
       addGrowthRecordMutation.mutate,
+      addGrowthRecordMutation.isPending,
       addVaccinationMutation.mutate,
       updateVaccinationMutation.mutate,
       addPrescriptionMutation.mutate,

@@ -10,6 +10,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function VaccinationsScreen() {
   const router = useRouter();
@@ -67,7 +68,7 @@ export default function VaccinationsScreen() {
   }
 
   return (
-    <>
+    <SafeAreaView style={styles.container}>
       <Stack.Screen options={{ title: "Calendário de Vacinação" }} />
       <ScrollView
         style={styles.container}
@@ -126,7 +127,7 @@ export default function VaccinationsScreen() {
           );
         })}
       </ScrollView>
-    </>
+    </SafeAreaView>
   );
 }
 

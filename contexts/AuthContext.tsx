@@ -2,6 +2,7 @@ import { User } from "@/types";
 import createContextHook from "@nkzw/create-context-hook";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import * as authService from "../src/services/auth";
 
 const STORAGE_KEY = "@health_app_user";
 
@@ -27,31 +28,37 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
   };
 
   const login = useCallback(async (email: string, password: string) => {
-    const mockUser: User = {
-      id: Date.now().toString(),
-      name: "William Cossa",
-      email,
-      phone: "+258 84 123 4567",
-      createdAt: new Date().toISOString(),
-    };
-    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(mockUser));
-    setUser(mockUser);
+    const { user, token } = await authService.login({ email, password });
+    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(user));
+    await AsyncStorage.setItem("@health_app_token", token);
+    setUser(user);
   }, []);
 
   const register = useCallback(
-    async (name: string, email: string, phone: string, password: string) => {
-      const newUser: User = {
-        id: Date.now().toString(),
+    async (
+      name: string,
+      email: string,
+      phone: string,
+      password: string,
+      role: string
+    ) => {
+      const { user, token } = await authService.register({
         name,
         email,
         phone,
-        createdAt: new Date().toISOString(),
-      };
-      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(newUser));
-      setUser(newUser);
+        password,
+        // role,
+      });
+      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(user));
+      await AsyncStorage.setItem("@health_app_token", token);
+      setUser(user);
     },
     []
   );
+
+  const forgotPassword = useCallback(async (email: string) => {
+    await authService.forgotPassword({ email });
+  }, []);
 
   const logout = useCallback(async () => {
     await AsyncStorage.removeItem(STORAGE_KEY);
@@ -66,7 +73,8 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       login,
       register,
       logout,
+      forgotPassword,
     }),
-    [user, isLoading, login, register, logout]
+    [user, isLoading, login, register, logout, forgotPassword]
   );
 });

@@ -1,5 +1,8 @@
 // Colors.ts - Baseado no logo da aplicação
 const Colors = {
+  light: "#4A7C8C",
+  dark: "#3A6575",
+
   primary: "#4A7C8C",
   primaryDark: "#3A6575",
   primaryLight: "#E3F0F3",

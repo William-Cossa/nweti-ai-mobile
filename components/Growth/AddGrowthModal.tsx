@@ -1,6 +1,7 @@
 import Colors from "@/constants/colors";
 import { LinearGradient } from "expo-linear-gradient";
 import { X } from "lucide-react-native";
+import { Spinner } from "../ui/spinner";
 import { useState } from "react";
 import {
   Alert,
@@ -17,11 +18,17 @@ import {
 
 interface Props {
   visible: boolean;
+  isSaving: boolean;
   onClose: () => void;
   onSave: (weight: number, height: number, notes: string) => void;
 }
 
-export default function AddGrowthModal({ visible, onClose, onSave }: Props) {
+export default function AddGrowthModal({
+  visible,
+  isSaving,
+  onClose,
+  onSave,
+}: Props) {
   const [weight, setWeight] = useState("");
   const [height, setHeight] = useState("");
   const [notes, setNotes] = useState("");
@@ -88,12 +95,20 @@ export default function AddGrowthModal({ visible, onClose, onSave }: Props) {
               numberOfLines={3}
             />
 
-            <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
+            <TouchableOpacity
+              style={styles.saveButton}
+              onPress={handleSave}
+              disabled={isSaving}
+            >
               <LinearGradient
                 colors={Colors.gradient.primary}
                 style={styles.saveButtonGradient}
               >
-                <Text style={styles.saveButtonText}>Guardar</Text>
+                {isSaving ? (
+                  <Spinner />
+                ) : (
+                  <Text style={styles.saveButtonText}>Guardar</Text>
+                )}
               </LinearGradient>
             </TouchableOpacity>
           </View>

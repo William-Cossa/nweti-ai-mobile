@@ -1,19 +1,39 @@
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  password?: string; // opcional no front
+  otp?: string;
+  otpExpires?: string;
+  photoUri?: string;
+  address?: string;
+  phone?: string;
+  role?: string | UserRole;
+  createdAt?: string;
+}
+enum UserRole {
+  MOTHER,
+  CAREGIVER,
+  GESTANTE,
+}
+
 export interface Child {
   id: string;
   name: string;
   dateOfBirth: string;
-  gender: "male" | "female";
+  gender: string;
   photoUri?: string;
-  weight: number;
-  height: number;
+  weight?: number;
+  height?: number;
   medicalNotes?: string;
   createdAt: string;
+  userId: string;
 }
 
 export interface GrowthRecord {
-  id: string;
+  id?: string;
   childId: string;
-  date: string;
+  date?: string;
   weight: number;
   height: number;
   headCircumference?: number;
@@ -23,13 +43,13 @@ export interface GrowthRecord {
 export interface Vaccine {
   id: string;
   name: string;
-  description: string;
-  recommendedAge: string;
+  description?: string;
+  recommendedAge: number; // era string no teu TS, mas é Int no schema
   ageInMonths: number;
-  utility: string;
+  utility?: string;
   diseases: string[];
   sideEffects: string[];
-  contraindications?: string[];
+  contraindications?: string;
   dosesRequired: number;
 }
 
@@ -40,7 +60,7 @@ export interface VaccinationRecord {
   vaccineName: string;
   dateAdministered?: string;
   nextDoseDate?: string;
-  status: "completed" | "pending" | "overdue";
+  status: string; // "completed" | "pending" | "overdue" é válido no front
   notes?: string;
 }
 
@@ -59,31 +79,39 @@ export interface Prescription {
 
 export interface Recommendation {
   id: string;
-  childId: string;
-  category: "nutrition" | "sleep" | "hygiene" | "activity" | "development";
+  userId: string;
+  recommendationMasterId: string;
+  childId?: string;
+  gestanteId?: string;
+  category: string;
   title: string;
   description: string;
-  priority: "low" | "medium" | "high";
+  priority: string;
   createdAt: string;
   isRead: boolean;
 }
 
-export interface User {
+export interface RecommendationMaster {
   id: string;
-  name: string;
-  email: string;
-  phone?: string;
-  createdAt: string;
+  category: string;
+  title: string;
+  description: string;
+  minAgeMonths?: number;
+  maxAgeMonths?: number;
+  minGestWeeks?: number;
+  maxGestWeeks?: number;
+  triggers: string[];
+  priority: string;
 }
 
 export interface HealthUnit {
   id: string;
   name: string;
-  type: "hospital" | "clinic" | "pharmacy";
+  type: string; // hospital, clinic, pharmacy
   address: string;
-  phone: string;
-  latitude: number;
-  longitude: number;
+  phone?: string;
+  latitude?: number;
+  longitude?: number;
   services: string[];
 }
 
@@ -92,11 +120,11 @@ export interface Reminder {
   childId: string;
   title: string;
   description?: string;
-  type: "medication" | "appointment" | "vaccination" | "measurement" | "other";
+  type: string;
   dateTime: string;
   isCompleted: boolean;
   isRecurring: boolean;
-  recurringPattern?: "daily" | "weekly" | "monthly";
+  recurringPattern?: string;
   notificationEnabled: boolean;
   createdAt: string;
 }

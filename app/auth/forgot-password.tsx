@@ -1,3 +1,4 @@
+import { useAuth } from "@/contexts/AuthContext";
 import Colors from "@/constants/colors";
 import { LinearGradient } from "expo-linear-gradient";
 import { Stack, useRouter } from "expo-router";
@@ -18,6 +19,7 @@ import {
 
 export default function ForgotPasswordScreen() {
   const router = useRouter();
+  const { forgotPassword } = useAuth();
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -31,14 +33,18 @@ export default function ForgotPasswordScreen() {
     setIsLoading(true);
     setError("");
 
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      await forgotPassword(email);
       Alert.alert(
         "Email Enviado",
         "Verifique a sua caixa de entrada para redefinir a palavra-passe.",
         [{ text: "OK", onPress: () => router.back() }]
       );
-    }, 1500);
+    } catch (err) {
+      setError("Erro ao enviar email. Tente novamente.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

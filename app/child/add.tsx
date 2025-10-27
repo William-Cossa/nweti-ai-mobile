@@ -1,4 +1,4 @@
-// import DateOfBirthInput from "@/components/DateOfBirthInput";
+import { DatePicker } from "@/components/ui/date-picker";
 import Colors from "@/constants/colors";
 import { useChild } from "@/contexts/ChildContext";
 import { LinearGradient } from "expo-linear-gradient";
@@ -6,6 +6,7 @@ import { useRouter } from "expo-router";
 import { Baby } from "lucide-react-native";
 import { useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
   Platform,
@@ -22,34 +23,47 @@ export default function AddChildScreen() {
   const router = useRouter();
   const { addChild } = useChild();
   const [name, setName] = useState("");
-  const [dateOfBirth, setDateOfBirth] = useState<Date | null>(null);
+  const [dateOfBirth, setDateOfBirth] = useState<Date | undefined>();
 
   const [gender, setGender] = useState<"male" | "female">("male");
   const [weight, setWeight] = useState("");
   const [height, setHeight] = useState("");
   const [medicalNotes, setMedicalNotes] = useState("");
 
-  const handleSave = () => {
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSave = async () => {
     if (!name || !dateOfBirth || !weight || !height) {
       Alert.alert("Erro", "Por favor, preencha todos os campos obrigatórios");
       return;
     }
 
+    setIsLoading(true);
+
     const newChild = {
-      id: Date.now().toString(),
       name,
       dateOfBirth: dateOfBirth?.toISOString() || "",
       gender,
       weight: parseFloat(weight),
       height: parseFloat(height),
       medicalNotes,
-      createdAt: new Date().toISOString(),
     };
 
-    addChild(newChild);
-    Alert.alert("Sucesso", "Criança adicionada com sucesso", [
-      { text: "OK", onPress: () => router.back() },
-    ]);
+    console.log(newChild);
+
+    try {
+      await addChild(newChild);
+      Alert.alert("Sucesso", "Criança adicionada com sucesso", [
+        { text: "OK", onPress: () => router.back() },
+      ]);
+    } catch (error) {
+      Alert.alert(
+        "Erro",
+        "Ocorreu um erro ao adicionar a criança. Tente novamente."
+      );
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -69,7 +83,6 @@ export default function AddChildScreen() {
               <Baby size={48} color={Colors.primary} />
             </View>
           </View>
-
           <Text style={styles.label}>Nome da Criança *</Text>
           <TextInput
             style={styles.input}
@@ -79,16 +92,14 @@ export default function AddChildScreen() {
             onChangeText={setName}
             returnKeyType="next"
           />
-
           <Text style={styles.label}>Data de Nascimento *</Text>
-
-          <TextInput
-            style={styles.input}
-            placeholder="DD/MM/AAAA"
-            placeholderTextColor={Colors.textLight}
+          <DatePicker
+            // label="Data de nascimento"
+            value={dateOfBirth}
+            onChange={setDateOfBirth}
+            placeholder="Data de nascimento"
           />
-
-          <Text style={styles.label}>Sexo *</Text>
+          ;<Text style={styles.label}>Sexo *</Text>
           <View style={styles.genderContainer}>
             <TouchableOpacity
               style={[
@@ -123,7 +134,6 @@ export default function AddChildScreen() {
               </Text>
             </TouchableOpacity>
           </View>
-
           <Text style={styles.label}>Peso Atual (kg) *</Text>
           <TextInput
             style={styles.input}
@@ -134,7 +144,6 @@ export default function AddChildScreen() {
             keyboardType="decimal-pad"
             returnKeyType="next"
           />
-
           <Text style={styles.label}>Altura Atual (cm) *</Text>
           <TextInput
             style={styles.input}
@@ -145,7 +154,6 @@ export default function AddChildScreen() {
             keyboardType="decimal-pad"
             returnKeyType="next"
           />
-
           <Text style={styles.label}>Observações Médicas</Text>
           <TextInput
             style={[styles.input, styles.textArea]}
@@ -156,13 +164,20 @@ export default function AddChildScreen() {
             multiline
             numberOfLines={4}
           />
-
-          <TouchableOpacity style={styles.button} onPress={handleSave}>
+          <TouchableOpacity
+            style={styles.button}
+            onPress={handleSave}
+            disabled={isLoading}
+          >
             <LinearGradient
               colors={Colors.gradient.primary}
               style={styles.buttonGradient}
             >
-              <Text style={styles.buttonText}>Guardar</Text>
+              {isLoading ? (
+                <ActivityIndicator color="#FFFFFF" />
+              ) : (
+                <Text style={styles.buttonText}>Guardar</Text>
+              )}
             </LinearGradient>
           </TouchableOpacity>
         </ScrollView>
