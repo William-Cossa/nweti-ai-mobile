@@ -51,18 +51,19 @@ export function CategoryFilterList({ categories, selected, onSelect }: Props) {
 
 const styles = StyleSheet.create({
   container: {
+    paddingVertical: 8, // a
     backgroundColor: Colors.surface,
     borderBottomWidth: 1,
     borderBottomColor: Colors.border,
   },
   scroll: {
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    // paddingVertical: 12,
     gap: 8,
   },
   chip: {
-    paddingHorizontal: 20,
-    paddingVertical: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
     borderRadius: 24,
     backgroundColor: Colors.surface,
     borderWidth: 2,
@@ -70,7 +71,7 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   text: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: "700",
     color: Colors.textSecondary,
   },

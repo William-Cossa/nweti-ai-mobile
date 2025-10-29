@@ -2,6 +2,7 @@ import Colors from "@/constants/colors";
 import { HEALTH_TIPS } from "@/mocks/healthTips";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
+import { Heart } from "lucide-react-native";
 import {
   ScrollView,
   StyleSheet,
@@ -52,7 +53,9 @@ export default function TipsCarousel() {
                 style={styles.tipBackground}
               >
                 <View style={styles.tipIconContainer}>
-                  <Text style={styles.tipIcon}>📚</Text>
+                  <Text style={styles.tipIcon}>
+                    <Heart />
+                  </Text>
                 </View>
               </LinearGradient>
               <LinearGradient

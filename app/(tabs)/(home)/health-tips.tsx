@@ -9,6 +9,7 @@ import Colors from "@/constants/colors";
 import { HEALTH_TIPS } from "@/mocks/healthTips";
 import { useState } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const CATEGORIES = [
   { id: "all" as const, label: "Todas", color: Colors.primary },
@@ -34,35 +35,39 @@ export default function HealthTipsScreen() {
   });
 
   return (
-    <View style={styles.container}>
-      <SearchBar value={searchQuery} onChangeText={setSearchQuery} />
-      <CategoryFilterList
-        categories={CATEGORIES}
-        selected={selectedCategory}
-        onSelect={setSelectedCategory}
-      />
+    <SafeAreaView style={styles.container}>
+      <View style={styles.container}>
+        <SearchBar value={searchQuery} onChangeText={setSearchQuery} />
+        <View>
+          <CategoryFilterList
+            categories={CATEGORIES}
+            selected={selectedCategory}
+            onSelect={setSelectedCategory}
+          />
+        </View>
 
-      <ScrollView
-        style={styles.content}
-        contentContainerStyle={styles.contentContainer}
-      >
-        {filteredTips.length === 0 ? (
-          <EmptyState />
-        ) : (
-          filteredTips.map((tip) => {
-            const cat = CATEGORIES.find((c) => c.id === tip.category);
-            return (
-              <HealthTipCard
-                key={tip.id}
-                tip={tip}
-                color={cat?.color || Colors.primary}
-                label={cat?.label || ""}
-              />
-            );
-          })
-        )}
-      </ScrollView>
-    </View>
+        <ScrollView
+          style={styles.content}
+          contentContainerStyle={styles.contentContainer}
+        >
+          {filteredTips.length === 0 ? (
+            <EmptyState />
+          ) : (
+            filteredTips.map((tip) => {
+              const cat = CATEGORIES.find((c) => c.id === tip.category);
+              return (
+                <HealthTipCard
+                  key={tip.id}
+                  tip={tip}
+                  color={cat?.color || Colors.primary}
+                  label={cat?.label || ""}
+                />
+              );
+            })
+          )}
+        </ScrollView>
+      </View>
+    </SafeAreaView>
   );
 }
 

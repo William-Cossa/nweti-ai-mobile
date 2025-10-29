@@ -44,12 +44,12 @@ export interface Vaccine {
   id: string;
   name: string;
   description?: string;
-  recommendedAge: number; // era string no teu TS, mas é Int no schema
+  recommendedAge: string;
   ageInMonths: number;
   utility?: string;
   diseases: string[];
   sideEffects: string[];
-  contraindications?: string;
+  contraindications?: string[];
   dosesRequired: number;
 }
 
@@ -62,6 +62,7 @@ export interface VaccinationRecord {
   nextDoseDate?: string;
   status: string; // "completed" | "pending" | "overdue" é válido no front
   notes?: string;
+  vaccine: Vaccine;
 }
 
 export interface Prescription {

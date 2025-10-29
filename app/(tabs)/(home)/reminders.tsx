@@ -22,20 +22,37 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
+
+import { Spinner } from "@/components/ui/spinner";
 
 export default function RemindersScreen() {
   const {
     selectedChild,
     getChildReminders,
-    toggleReminderCompleted,
+    isLoading,
+    isDeletingReminder,
     deleteReminder,
+    updateReminder,
+    isUpdatingReminder,
   } = useChild();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const reminders = selectedChild ? getChildReminders(selectedChild.id) : [];
 
   const [filter, setFilter] = useState<"all" | "pending" | "completed">("all");
+
+  if (isLoading || isDeletingReminder || isUpdatingReminder) {
+    return (
+      <SafeAreaView style={styles.loadingContainer}>
+        <Spinner color={Colors.primary} />
+        {/* <Text style={styles.loadingText}>A carregar lembretes...</Text> */}
+      </SafeAreaView>
+    );
+  }
 
   const filteredReminders = reminders.filter((reminder: any) => {
     if (filter === "pending") return !reminder.isCompleted;
@@ -118,7 +135,12 @@ export default function RemindersScreen() {
     <View key={reminder.id} style={styles.reminderCard}>
       <TouchableOpacity
         style={styles.checkboxContainer}
-        onPress={() => toggleReminderCompleted(reminder.id)}
+        onPress={() =>
+          updateReminder({
+            id: reminder.id,
+            reminder: { isCompleted: !reminder.isCompleted },
+          })
+        }
       >
         {reminder.isCompleted ? (
           <CheckCircle size={24} color={Colors.success} />
@@ -183,101 +205,103 @@ export default function RemindersScreen() {
   }
 
   return (
-    <View style={styles.container}>
-      <View style={styles.filterContainer}>
-        <TouchableOpacity
-          style={[
-            styles.filterButton,
-            filter === "all" && styles.filterButtonActive,
-          ]}
-          onPress={() => setFilter("all")}
-        >
-          <Text
+    <SafeAreaView style={styles.container}>
+      <View style={styles.container}>
+        <View style={styles.filterContainer}>
+          <TouchableOpacity
             style={[
-              styles.filterText,
-              filter === "all" && styles.filterTextActive,
+              styles.filterButton,
+              filter === "all" && styles.filterButtonActive,
             ]}
+            onPress={() => setFilter("all")}
           >
-            Todos ({reminders.length})
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[
-            styles.filterButton,
-            filter === "pending" && styles.filterButtonActive,
-          ]}
-          onPress={() => setFilter("pending")}
-        >
-          <Text
+            <Text
+              style={[
+                styles.filterText,
+                filter === "all" && styles.filterTextActive,
+              ]}
+            >
+              Todos ({reminders.length})
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
             style={[
-              styles.filterText,
-              filter === "pending" && styles.filterTextActive,
+              styles.filterButton,
+              filter === "pending" && styles.filterButtonActive,
             ]}
+            onPress={() => setFilter("pending")}
           >
-            Pendentes ({upcomingReminders.length + overdueReminders.length})
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[
-            styles.filterButton,
-            filter === "completed" && styles.filterButtonActive,
-          ]}
-          onPress={() => setFilter("completed")}
-        >
-          <Text
+            <Text
+              style={[
+                styles.filterText,
+                filter === "pending" && styles.filterTextActive,
+              ]}
+            >
+              Pendentes ({upcomingReminders.length + overdueReminders.length})
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
             style={[
-              styles.filterText,
-              filter === "completed" && styles.filterTextActive,
+              styles.filterButton,
+              filter === "completed" && styles.filterButtonActive,
             ]}
+            onPress={() => setFilter("completed")}
           >
-            Concluídos ({completedReminders.length})
-          </Text>
+            <Text
+              style={[
+                styles.filterText,
+                filter === "completed" && styles.filterTextActive,
+              ]}
+            >
+              Concluídos ({completedReminders.length})
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.content}
+        >
+          {overdueReminders.length > 0 && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Atrasados</Text>
+              {overdueReminders.map(renderReminder)}
+            </View>
+          )}
+
+          {upcomingReminders.length > 0 && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Próximos</Text>
+              {upcomingReminders.map(renderReminder)}
+            </View>
+          )}
+
+          {completedReminders.length > 0 && filter !== "pending" && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Concluídos</Text>
+              {completedReminders.map(renderReminder)}
+            </View>
+          )}
+
+          {filteredReminders.length === 0 && (
+            <View style={styles.emptyState}>
+              <Bell size={64} color={Colors.textLight} />
+              <Text style={styles.emptyTitle}>Nenhum lembrete</Text>
+              <Text style={styles.emptySubtitle}>
+                Adicione lembretes para não perder nenhum compromisso
+              </Text>
+            </View>
+          )}
+        </ScrollView>
+
+        <TouchableOpacity
+          style={[styles.fab, { bottom: 16 + insets.bottom }]}
+          onPress={() => router.push("/reminders/add" as any)}
+        >
+          <Plus size={24} color="#FFFFFF" />
         </TouchableOpacity>
       </View>
-
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.content}
-      >
-        {overdueReminders.length > 0 && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Atrasados</Text>
-            {overdueReminders.map(renderReminder)}
-          </View>
-        )}
-
-        {upcomingReminders.length > 0 && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Próximos</Text>
-            {upcomingReminders.map(renderReminder)}
-          </View>
-        )}
-
-        {completedReminders.length > 0 && filter !== "pending" && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Concluídos</Text>
-            {completedReminders.map(renderReminder)}
-          </View>
-        )}
-
-        {filteredReminders.length === 0 && (
-          <View style={styles.emptyState}>
-            <Bell size={64} color={Colors.textLight} />
-            <Text style={styles.emptyTitle}>Nenhum lembrete</Text>
-            <Text style={styles.emptySubtitle}>
-              Adicione lembretes para não perder nenhum compromisso
-            </Text>
-          </View>
-        )}
-      </ScrollView>
-
-      <TouchableOpacity
-        style={[styles.fab, { bottom: 16 + insets.bottom }]}
-        onPress={() => router.push("/reminders/add" as any)}
-      >
-        <Plus size={24} color="#FFFFFF" />
-      </TouchableOpacity>
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -449,5 +473,16 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 8,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: Colors.background,
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 16,
+    color: Colors.textSecondary,
   },
 });

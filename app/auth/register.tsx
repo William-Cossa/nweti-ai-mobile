@@ -139,7 +139,7 @@ export default function RegisterScreen() {
                 keyboardType="phone-pad"
               />
             </View>
-            {/* <View style={styles.inputContainer}>
+            {/* <View style={styles.inputContainer>
               <Hotel
                 size={20}
                 color={Colors.textSecondary}

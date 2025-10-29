@@ -60,6 +60,12 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     await authService.forgotPassword({ email });
   }, []);
 
+  const updateUser = useCallback(async (id: string, userData: Partial<User>) => {
+    const updatedUser = await authService.updateUser(id, userData);
+    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updatedUser));
+    setUser(updatedUser);
+  }, []);
+
   const logout = useCallback(async () => {
     await AsyncStorage.removeItem(STORAGE_KEY);
     setUser(null);
@@ -74,7 +80,8 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       register,
       logout,
       forgotPassword,
+      updateUser,
     }),
-    [user, isLoading, login, register, logout, forgotPassword]
+    [user, isLoading, login, register, logout, forgotPassword, updateUser]
   );
 });

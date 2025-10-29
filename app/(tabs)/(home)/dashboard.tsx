@@ -6,9 +6,9 @@ import SummaryCard from "@/components/dashboard/SummaryCard";
 import VaccineProgress from "@/components/dashboard/VaccineProgress";
 import Colors from "@/constants/colors";
 import { useChild } from "@/contexts/ChildContext";
-import { VACCINES } from "@/mocks/vaccines";
 import { Stack } from "expo-router";
 import { ScrollView, StyleSheet } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function DashboardScreen() {
   const {
@@ -22,14 +22,14 @@ export default function DashboardScreen() {
     return <EmptyState message="Selecione uma criança para ver o painel" />;
   }
 
-  const growthRecords = getChildGrowthRecords(selectedChild.id);
+  const growthRecords = getChildGrowthRecords();
   const vaccinations = getChildVaccinations(selectedChild.id);
   const prescriptions = getChildPrescriptions(selectedChild.id);
 
   const completedVaccines = vaccinations.filter(
     (v: any) => v.status === "completed"
   ).length;
-  const totalVaccines = VACCINES.length;
+  const totalVaccines = vaccinations.length;
   const vaccineProgress =
     totalVaccines > 0 ? (completedVaccines / totalVaccines) * 100 : 0;
 
@@ -50,7 +50,7 @@ export default function DashboardScreen() {
   };
 
   return (
-    <>
+    <SafeAreaView style={styles.container}>
       <Stack.Screen options={{ title: "Painel de Controlo" }} />
       <ScrollView
         style={styles.container}
@@ -97,7 +97,7 @@ export default function DashboardScreen() {
           />
         )}
       </ScrollView>
-    </>
+    </SafeAreaView>
   );
 }
 

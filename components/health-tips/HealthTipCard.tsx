@@ -1,4 +1,5 @@
 import Colors from "@/constants/colors";
+import { BookText } from "lucide-react-native";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 interface Tip {
@@ -19,7 +20,7 @@ export function HealthTipCard({ tip, color, label }: Props) {
     <TouchableOpacity style={styles.card}>
       <View style={styles.imagePlaceholder}>
         <View style={[styles.emojiContainer, { backgroundColor: color }]}>
-          <Text style={{ fontSize: 32 }}>📚</Text>
+          <BookText size={48} color="#FFF" />
         </View>
       </View>
 
@@ -50,15 +51,17 @@ const styles = StyleSheet.create({
   },
   imagePlaceholder: {
     width: "100%",
-    height: 200,
+    height: 180,
     backgroundColor: Colors.primaryLight,
     alignItems: "center",
     justifyContent: "center",
   },
   emojiContainer: {
-    paddingHorizontal: 24,
-    paddingVertical: 24,
-    borderRadius: 60,
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    alignItems: "center",
+    justifyContent: "center",
   },
   content: {
     padding: 16,

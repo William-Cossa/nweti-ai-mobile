@@ -15,3 +15,8 @@ export const forgotPassword = async (email: Pick<User, "email">) => {
   const response = await api.post("/auth/forgot-password", email);
   return response.data;
 };
+
+export const updateUser = async (id: string, userData: Partial<User>) => {
+  const response = await api.put(`/users/${id}`, userData);
+  return response.data;
+};

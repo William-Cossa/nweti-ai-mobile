@@ -1,5 +1,6 @@
 import Colors from "@/constants/colors";
 import { useChild } from "@/contexts/ChildContext";
+import { Prescription } from "@/types";
 import { LinearGradient } from "expo-linear-gradient";
 import { Calendar, Clock, Pill, Plus, X } from "lucide-react-native";
 import { useState } from "react";
@@ -13,22 +14,24 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function PrescriptionsScreen() {
   const {
     selectedChild,
-    getChildPrescriptions,
     addPrescription,
     deletePrescription,
+    getChildPrescriptions,
   } = useChild();
-  const prescriptions = selectedChild
-    ? getChildPrescriptions(selectedChild.id)
-    : [];
+
   const [modalVisible, setModalVisible] = useState(false);
   const [medicationName, setMedicationName] = useState("");
   const [dosage, setDosage] = useState("");
   const [frequency, setFrequency] = useState("");
   const [notes, setNotes] = useState("");
+  const prescriptions = selectedChild
+    ? getChildPrescriptions(selectedChild.id)
+    : [];
 
   const handleAddPrescription = () => {
     if (!medicationName || !dosage || !frequency) {
@@ -38,14 +41,12 @@ export default function PrescriptionsScreen() {
 
     if (selectedChild) {
       addPrescription({
-        id: Date.now().toString(),
         childId: selectedChild.id,
         medicationName,
         dosage,
         frequency,
         startDate: new Date().toISOString(),
         notes,
-        isActive: true,
       });
 
       setMedicationName("");
@@ -83,7 +84,7 @@ export default function PrescriptionsScreen() {
   }
 
   return (
-    <>
+    <SafeAreaView style={styles.container}>
       <ScrollView
         style={styles.container}
         contentContainerStyle={styles.content}
@@ -115,7 +116,7 @@ export default function PrescriptionsScreen() {
             </Text>
           </View>
         ) : (
-          prescriptions.map((prescription: any) => (
+          prescriptions.map((prescription: Prescription) => (
             <View key={prescription.id} style={styles.prescriptionCard}>
               <View style={styles.cardHeader}>
                 <View style={styles.iconContainer}>
@@ -223,7 +224,7 @@ export default function PrescriptionsScreen() {
           </View>
         </View>
       </Modal>
-    </>
+    </SafeAreaView>
   );
 }
 
@@ -264,7 +265,7 @@ const styles = StyleSheet.create({
   addButton: {
     width: 48,
     height: 48,
-    borderRadius: 24,
+    borderRadius: 50,
     backgroundColor: Colors.primary,
     alignItems: "center",
     justifyContent: "center",

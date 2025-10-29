@@ -1,12 +1,13 @@
 import Colors from "@/constants/colors";
 import { useChild } from "@/contexts/ChildContext";
-import { useRouter } from "expo-router";
+import { useState } from "react";
+import SwitchChildModal from "./SwitchChildModal";
 import { Baby } from "lucide-react-native";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 export default function ChildHeader() {
-  const router = useRouter();
   const { selectedChild, children } = useChild();
+  const [modalVisible, setModalVisible] = useState(false);
 
   const getChildAge = (dateOfBirth: string) => {
     const today = new Date();
@@ -24,27 +25,33 @@ export default function ChildHeader() {
   };
 
   return (
-    <View style={styles.header}>
-      <View style={styles.childInfo}>
-        <View style={styles.childAvatar}>
-          <Baby size={32} color={Colors.primary} />
+    <>
+      <View style={styles.header}>
+        <View style={styles.childInfo}>
+          <View style={styles.childAvatar}>
+            <Baby size={32} color={Colors.primary} />
+          </View>
+          <View style={styles.childDetails}>
+            <Text style={styles.childName}>{selectedChild.name}</Text>
+            <Text style={styles.childAge}>
+              {getChildAge(selectedChild.dateOfBirth)}
+            </Text>
+          </View>
         </View>
-        <View style={styles.childDetails}>
-          <Text style={styles.childName}>{selectedChild.name}</Text>
-          <Text style={styles.childAge}>
-            {getChildAge(selectedChild.dateOfBirth)}
-          </Text>
-        </View>
+        {children.length > 1 && (
+          <TouchableOpacity
+            style={styles.switchButton}
+            onPress={() => setModalVisible(true)}
+          >
+            <Text style={styles.switchButtonText}>Trocar</Text>
+          </TouchableOpacity>
+        )}
       </View>
-      {children.length > 1 && (
-        <TouchableOpacity
-          style={styles.switchButton}
-          onPress={() => router.push("/child/select" as any)}
-        >
-          <Text style={styles.switchButtonText}>Trocar</Text>
-        </TouchableOpacity>
-      )}
-    </View>
+      <SwitchChildModal
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+      />
+    </>
   );
 }
 

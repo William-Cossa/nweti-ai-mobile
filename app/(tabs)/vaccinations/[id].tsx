@@ -1,6 +1,8 @@
+import { UpdateVaccinationModal } from "@/components/vaccinations";
+import UpdateVaccinationModalOver from "@/components/vaccinations/UpdateVaccinationModalOver";
 import Colors from "@/constants/colors";
 import { useChild } from "@/contexts/ChildContext";
-import { VACCINES } from "@/mocks/vaccines";
+import { VaccinationRecord } from "@/types";
 import { Stack, useLocalSearchParams } from "expo-router";
 import {
   AlertCircle,
@@ -11,6 +13,7 @@ import {
   Shield,
   Syringe,
 } from "lucide-react-native";
+import { useState } from "react";
 import {
   ScrollView,
   StyleSheet,
@@ -18,19 +21,40 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function VaccineDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { selectedChild, getChildVaccinations } = useChild();
+  const {
+    selectedChild,
+    getChildVaccinations,
+    isLoading,
+    isUpdatingVaccinationRecord,
+    updateVaccinationRecord,
+  } = useChild();
 
-  const vaccine = VACCINES.find((v) => v.id === id);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalOverVisible, setModalOverVisible] = useState(false);
+  const [selectedVaccination, setSelectedVaccination] =
+    useState<VaccinationRecord>();
+
+  const handleOpenModal = (vaccination: VaccinationRecord) => {
+    setSelectedVaccination(vaccination);
+    setModalVisible(true);
+  };
+
+  const handleOpenModalOver = (vaccination: VaccinationRecord) => {
+    setSelectedVaccination(vaccination);
+    setModalOverVisible(true);
+  };
   const vaccinations = selectedChild
     ? getChildVaccinations(selectedChild.id)
     : [];
+  const vaccination = vaccinations.find((v) => v.vaccineId === id);
   const vaccinationRecord = vaccinations.find((v: any) => v.vaccineId === id);
   const status = vaccinationRecord?.status || "pending";
 
-  if (!vaccine) {
+  if (!vaccination) {
     return (
       <View style={styles.errorContainer}>
         <Text style={styles.errorText}>Vacina não encontrada</Text>
@@ -70,10 +94,40 @@ export default function VaccineDetailScreen() {
         return Colors.warning;
     }
   };
+  const handleSave = (date: Date, notes: string) => {
+    if (selectedVaccination) {
+      const updatedRecord = {
+        status: "completed",
+        dateAdministered: date.toISOString(),
+        notes,
+      };
+
+      updateVaccinationRecord({
+        id: selectedVaccination.id,
+        record: updatedRecord,
+      });
+      setModalVisible(false);
+    }
+  };
+  const handleSaveOver = (date: Date, notes: string) => {
+    if (selectedVaccination) {
+      const updatedRecord = {
+        status: "overdue",
+        // dateAdministered: date.toISOString(),
+        notes,
+      };
+
+      updateVaccinationRecord({
+        id: selectedVaccination.id,
+        record: updatedRecord,
+      });
+      setModalVisible(false);
+    }
+  };
 
   return (
-    <>
-      <Stack.Screen options={{ title: vaccine.name }} />
+    <SafeAreaView style={styles.container}>
+      <Stack.Screen options={{ title: vaccination.vaccine.name }} />
       <ScrollView
         style={styles.container}
         contentContainerStyle={styles.content}
@@ -90,7 +144,9 @@ export default function VaccineDetailScreen() {
               <Text style={[styles.statusText, { color: getStatusColor() }]}>
                 {getStatusText()}
               </Text>
-              <Text style={styles.statusAge}>{vaccine.recommendedAge}</Text>
+              <Text style={styles.statusAge}>
+                {vaccination.vaccine.recommendedAge}
+              </Text>
             </View>
           </View>
         </View>
@@ -100,8 +156,10 @@ export default function VaccineDetailScreen() {
             <Syringe size={24} color={Colors.primary} />
             <Text style={styles.sectionTitle}>Sobre a Vacina</Text>
           </View>
-          <Text style={styles.vaccineName}>{vaccine.name}</Text>
-          <Text style={styles.description}>{vaccine.description}</Text>
+          <Text style={styles.vaccineName}>{vaccination.vaccine.name}</Text>
+          <Text style={styles.description}>
+            {vaccination.vaccine.description}
+          </Text>
         </View>
 
         <View style={styles.section}>
@@ -109,7 +167,7 @@ export default function VaccineDetailScreen() {
             <Shield size={24} color={Colors.success} />
             <Text style={styles.sectionTitle}>Utilidade</Text>
           </View>
-          <Text style={styles.bodyText}>{vaccine.utility}</Text>
+          <Text style={styles.bodyText}>{vaccination.vaccine.utility}</Text>
         </View>
 
         <View style={styles.section}>
@@ -117,7 +175,7 @@ export default function VaccineDetailScreen() {
             <Info size={24} color={Colors.info} />
             <Text style={styles.sectionTitle}>Protege Contra</Text>
           </View>
-          {vaccine.diseases.map((disease, index) => (
+          {vaccination.vaccine.diseases.map((disease: any, index: number) => (
             <View key={index} style={styles.listItem}>
               <View style={styles.bullet} />
               <Text style={styles.listText}>{disease}</Text>
@@ -130,7 +188,7 @@ export default function VaccineDetailScreen() {
             <AlertTriangle size={24} color={Colors.warning} />
             <Text style={styles.sectionTitle}>Efeitos Secundários Comuns</Text>
           </View>
-          {vaccine.sideEffects.map((effect, index) => (
+          {vaccination.vaccine.sideEffects.map((effect: any, index: number) => (
             <View key={index} style={styles.listItem}>
               <View
                 style={[styles.bullet, { backgroundColor: Colors.warning }]}
@@ -144,28 +202,34 @@ export default function VaccineDetailScreen() {
           </Text>
         </View>
 
-        {vaccine.contraindications && vaccine.contraindications.length > 0 && (
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <AlertCircle size={24} color={Colors.danger} />
-              <Text style={styles.sectionTitle}>Contraindicações</Text>
-            </View>
-            {vaccine.contraindications.map((contraindication, index) => (
-              <View key={index} style={styles.listItem}>
-                <View
-                  style={[styles.bullet, { backgroundColor: Colors.danger }]}
-                />
-                <Text style={styles.listText}>{contraindication}</Text>
+        {vaccination.vaccine.contraindications &&
+          vaccination.vaccine.contraindications.length > 0 && (
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <AlertCircle size={24} color={Colors.danger} />
+                <Text style={styles.sectionTitle}>Contraindicações</Text>
               </View>
-            ))}
-          </View>
-        )}
+              {vaccination.vaccine.contraindications.map(
+                (contraindication: any, index: number) => (
+                  <View key={index} style={styles.listItem}>
+                    <View
+                      style={[
+                        styles.bullet,
+                        { backgroundColor: Colors.danger },
+                      ]}
+                    />
+                    <Text style={styles.listText}>{contraindication}</Text>
+                  </View>
+                )
+              )}
+            </View>
+          )}
 
         <View style={styles.infoCard}>
           <Text style={styles.infoTitle}>Número de Doses</Text>
           <Text style={styles.infoValue}>
-            {vaccine.dosesRequired}{" "}
-            {vaccine.dosesRequired === 1 ? "dose" : "doses"}
+            {vaccination.vaccine.dosesRequired}{" "}
+            {vaccination.vaccine.dosesRequired === 1 ? "dose" : "doses"}
           </Text>
         </View>
 
@@ -190,14 +254,36 @@ export default function VaccineDetailScreen() {
             </Text>
           </View>
         )}
-
+        <UpdateVaccinationModal
+          visible={modalVisible}
+          isSaving={isUpdatingVaccinationRecord}
+          onClose={() => setModalVisible(false)}
+          onSave={handleSave}
+        />
+        <UpdateVaccinationModalOver
+          visible={modalOverVisible}
+          isSaving={isUpdatingVaccinationRecord}
+          onClose={() => setModalOverVisible(false)}
+          onSave={handleSaveOver}
+        />
         {status !== "completed" && (
-          <TouchableOpacity style={styles.actionButton}>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => handleOpenModal(vaccination)}
+          >
             <Text style={styles.actionButtonText}>Marcar como Aplicada</Text>
           </TouchableOpacity>
         )}
+        {status !== "overdue" && (
+          <TouchableOpacity
+            style={styles.actionButtonDanger}
+            onPress={() => handleOpenModalOver(vaccination)}
+          >
+            <Text style={styles.actionButtonText}>Marcar como Atrasada</Text>
+          </TouchableOpacity>
+        )}
       </ScrollView>
-    </>
+    </SafeAreaView>
   );
 }
 
@@ -337,5 +423,17 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "700" as const,
+  },
+  actionButtonDanger: {
+    backgroundColor: Colors.danger,
+    borderRadius: 12,
+    padding: 16,
+    alignItems: "center",
+    marginTop: 8,
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
   },
 });

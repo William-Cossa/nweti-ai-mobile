@@ -38,14 +38,17 @@ export default function ProfileScreen() {
         style={styles.container}
         contentContainerStyle={styles.content}
       >
-        <View style={styles.header}>
+        <TouchableOpacity
+          style={styles.header}
+          onPress={() => router.push("/auth/edit-profile" as any)}
+        >
           <View style={styles.avatar}>
             <User size={48} color={Colors.primary} />
           </View>
           <Text style={styles.name}>{user?.name}</Text>
           <Text style={styles.email}>{user?.email}</Text>
           {user?.phone && <Text style={styles.phone}>{user.phone}</Text>}
-        </View>
+        </TouchableOpacity>
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Crianças Registadas</Text>
@@ -56,7 +59,11 @@ export default function ProfileScreen() {
             </View>
           ) : (
             children.map((child: any) => (
-              <View key={child.id} style={styles.childCard}>
+              <TouchableOpacity
+                key={child.id}
+                style={styles.childCard}
+                onPress={() => router.push(`/child/${child.id}` as any)}
+              >
                 <View style={styles.childAvatar}>
                   <Baby size={24} color={Colors.primary} />
                 </View>
@@ -66,7 +73,7 @@ export default function ProfileScreen() {
                     {new Date(child.dateOfBirth).toLocaleDateString("pt-PT")}
                   </Text>
                 </View>
-              </View>
+              </TouchableOpacity>
             ))
           )}
           <TouchableOpacity
@@ -80,7 +87,10 @@ export default function ProfileScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Configurações</Text>
 
-          <TouchableOpacity style={styles.menuItem}>
+          <TouchableOpacity
+            style={styles.menuItem}
+            onPress={() => router.push("/profile/settings" as any)}
+          >
             <Settings size={24} color={Colors.textSecondary} />
             <Text style={styles.menuText}>Definições</Text>
           </TouchableOpacity>

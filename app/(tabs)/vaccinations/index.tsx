@@ -1,8 +1,13 @@
 import Colors from "@/constants/colors";
 import { useChild } from "@/contexts/ChildContext";
-import { VACCINES } from "@/mocks/vaccines";
+
+import { Spinner } from "@/components/ui/spinner";
+import { UpdateVaccinationModal } from "@/components/vaccinations";
 import { Stack, useRouter } from "expo-router";
 import { AlertCircle, CheckCircle, Clock } from "lucide-react-native";
+import { useState } from "react";
+
+import { VaccinationRecord } from "@/types";
 import {
   ScrollView,
   StyleSheet,
@@ -14,15 +19,19 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function VaccinationsScreen() {
   const router = useRouter();
-  const { selectedChild, getChildVaccinations } = useChild();
+  const {
+    selectedChild,
+    getChildVaccinations,
+    isLoading,
+    isUpdatingVaccinationRecord,
+    updateVaccinationRecord,
+  } = useChild();
   const vaccinations = selectedChild
     ? getChildVaccinations(selectedChild.id)
     : [];
-
-  const getVaccineStatus = (vaccineId: string) => {
-    const record = vaccinations.find((v: any) => v.vaccineId === vaccineId);
-    return record?.status || "pending";
-  };
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedVaccination, setSelectedVaccination] =
+    useState<VaccinationRecord>();
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -57,6 +66,33 @@ export default function VaccinationsScreen() {
     }
   };
 
+  const handleOpenModal = (vaccination: VaccinationRecord) => {
+    setSelectedVaccination(vaccination);
+    setModalVisible(true);
+  };
+
+  const handleSave = (date: Date, notes: string) => {
+    if (selectedVaccination) {
+      const updatedRecord = {
+        status: "completed",
+        dateAdministered: date.toISOString(),
+        notes,
+      };
+
+      console.log("💉 Record a atualizar:", updatedRecord); // 👈 Log detalhado
+
+      updateVaccinationRecord({
+        id: selectedVaccination.id,
+        record: updatedRecord,
+      });
+      setModalVisible(false);
+    }
+  };
+
+  if (isLoading) {
+    return <Spinner />;
+  }
+
   if (!selectedChild) {
     return (
       <View style={styles.emptyContainer}>
@@ -81,52 +117,69 @@ export default function VaccinationsScreen() {
           </Text>
         </View>
 
-        {VACCINES.map((vaccine) => {
-          const status = getVaccineStatus(vaccine.id);
+        {vaccinations.map((vaccination) => {
+          const { vaccine, status } = vaccination;
           return (
-            <TouchableOpacity
-              key={vaccine.id}
-              style={[
-                styles.vaccineCard,
-                { backgroundColor: getStatusColor(status) },
-              ]}
-              onPress={() =>
-                router.push(`/(tabs)/vaccinations/${vaccine.id}` as any)
-              }
-            >
-              <View style={styles.vaccineHeader}>
-                <View style={styles.vaccineInfo}>
-                  <Text style={styles.vaccineName}>{vaccine.name}</Text>
-                  <Text style={styles.vaccineAge}>
-                    {vaccine.recommendedAge}
+            <View key={vaccine.id} style={styles.vaccineCardContainer}>
+              <TouchableOpacity
+                style={[
+                  styles.vaccineCard,
+                  { backgroundColor: getStatusColor(status) },
+                ]}
+                onPress={() =>
+                  router.push(`/(tabs)/vaccinations/${vaccine.id}` as any)
+                }
+              >
+                <View style={styles.vaccineHeader}>
+                  <View style={styles.vaccineInfo}>
+                    <Text style={styles.vaccineName}>{vaccine.name}</Text>
+                    <Text style={styles.vaccineAge}>
+                      {vaccine.recommendedAge}
+                    </Text>
+                  </View>
+                  {getStatusIcon(status)}
+                </View>
+                <Text style={styles.vaccineDescription}>
+                  {vaccine.description}
+                </Text>
+                <View style={styles.vaccineFooter}>
+                  <Text
+                    style={[
+                      styles.statusText,
+                      {
+                        color:
+                          status === "completed"
+                            ? Colors.success
+                            : status === "overdue"
+                            ? Colors.danger
+                            : Colors.warning,
+                      },
+                    ]}
+                  >
+                    {getStatusText(status)}
                   </Text>
                 </View>
-                {getStatusIcon(status)}
-              </View>
-              <Text style={styles.vaccineDescription}>
-                {vaccine.description}
-              </Text>
-              <View style={styles.vaccineFooter}>
-                <Text
-                  style={[
-                    styles.statusText,
-                    {
-                      color:
-                        status === "completed"
-                          ? Colors.success
-                          : status === "overdue"
-                          ? Colors.danger
-                          : Colors.warning,
-                    },
-                  ]}
+              </TouchableOpacity>
+              {status !== "completed" && (
+                <TouchableOpacity
+                  style={styles.applyButton}
+                  onPress={() => handleOpenModal(vaccination)}
                 >
-                  {getStatusText(status)}
-                </Text>
-              </View>
-            </TouchableOpacity>
+                  <Text style={styles.applyButtonText}>
+                    Marcar como aplicada
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
           );
         })}
       </ScrollView>
+      <UpdateVaccinationModal
+        visible={modalVisible}
+        isSaving={isUpdatingVaccinationRecord}
+        onClose={() => setModalVisible(false)}
+        onSave={handleSave}
+      />
     </SafeAreaView>
   );
 }
@@ -162,15 +215,29 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: Colors.textSecondary,
   },
+  vaccineCardContainer: {
+    marginBottom: 12,
+  },
   vaccineCard: {
     borderRadius: 16,
     padding: 16,
-    marginBottom: 12,
     shadowColor: Colors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2,
+  },
+  applyButton: {
+    backgroundColor: Colors.primary,
+    paddingVertical: 12,
+    borderBottomLeftRadius: 16,
+    borderBottomRightRadius: 16,
+    alignItems: "center",
+  },
+  applyButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "700",
   },
   vaccineHeader: {
     flexDirection: "row",

@@ -6,12 +6,15 @@ import {
   Activity,
   Bell,
   Calendar,
-  Clock,
   FileText,
   Pill,
   Syringe,
 } from "lucide-react-native";
-import { useState } from "react";
+
+import { DatePicker } from "@/components/ui/date-picker";
+import { Spinner } from "@/components/ui/spinner";
+import * as Notifications from "expo-notifications";
+import { useEffect, useState } from "react";
 import {
   ScrollView,
   StyleSheet,
@@ -22,15 +25,23 @@ import {
   View,
 } from "react-native";
 
+// Pedir permissão ao iniciar o app
+const requestNotificationPermission = async () => {
+  const { status } = await Notifications.requestPermissionsAsync();
+  if (status !== "granted") {
+    alert("Permissões de notificações não concedidas!");
+  }
+};
+
 export default function AddReminderScreen() {
   const router = useRouter();
-  const { selectedChild, addReminder } = useChild();
+  const { selectedChild, addReminder, isAddingReminder } = useChild();
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [type, setType] = useState<Reminder["type"]>("other");
-  const [date] = useState(new Date());
-  const [time] = useState(new Date());
+  const [dateTime, setDateTime] = useState<Date | undefined>(new Date());
+
   const [isRecurring, setIsRecurring] = useState(false);
   const [recurringPattern, setRecurringPattern] = useState<
     "daily" | "weekly" | "monthly"
@@ -45,37 +56,71 @@ export default function AddReminderScreen() {
       { value: "measurement", label: "Medição", icon: Activity },
       { value: "other", label: "Outro", icon: FileText },
     ];
+  useEffect(() => {
+    const requestPermissions = async () => {
+      const { status } = await Notifications.requestPermissionsAsync();
+      if (status !== "granted") {
+        alert("Permissões de notificações não concedidas!");
+      }
+    };
+    requestPermissions();
+  }, []);
+  const getFriendlyMessage = (
+    type: Reminder["type"],
+    title: string,
+    description?: string
+  ) => {
+    switch (type) {
+      case "medication":
+        return `Hora de tomar a tua medicação: ${title}. Cuida da tua saúde!`;
+      case "appointment":
+        return `Não te esqueças da consulta: ${title}. Prepara-te com antecedência!`;
+      case "vaccination":
+        return `Hoje tens vacinação: ${title}. Mantenha a tua imunização em dia!`;
+      case "measurement":
+        return `É hora da medição: ${title}. Regista os teus resultados!`;
+      case "other":
+      default:
+        return `Lembrete: ${title}${description ? " - " + description : ""}`;
+    }
+  };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!title.trim() || !selectedChild) return;
 
-    const dateTime = new Date(date);
-    dateTime.setHours(time.getHours());
-    dateTime.setMinutes(time.getMinutes());
-
-    const newReminder: Reminder = {
-      id: Date.now().toString(),
+    const newReminder: Partial<Reminder> = {
       childId: selectedChild.id,
       title: title.trim(),
       description: description.trim() || undefined,
       type,
-      dateTime: dateTime.toISOString(),
-      isCompleted: false,
+      dateTime: dateTime!.toISOString(),
       isRecurring,
       recurringPattern: isRecurring ? recurringPattern : undefined,
       notificationEnabled,
-      createdAt: new Date().toISOString(),
     };
+    let friendlyMessage = getFriendlyMessage(
+      type,
+      title.trim(),
+      description.trim()
+    );
+    if (notificationEnabled) {
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: title.trim(),
+          body: friendlyMessage,
+          sound: "default",
+        },
+        trigger: {
+          type: "date",
+          date: dateTime!, // a tua data
+        } as Notifications.DateTriggerInput,
+      });
+    }
 
-    addReminder(newReminder);
-    router.back();
-  };
-
-  const formatDate = (date: Date) => {
-    return date.toLocaleDateString("pt-PT", {
-      day: "2-digit",
-      month: "long",
-      year: "numeric",
+    addReminder(newReminder, {
+      onSuccess: () => {
+        router.back();
+      },
     });
   };
 
@@ -158,19 +203,16 @@ export default function AddReminderScreen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.label}>Data</Text>
-          <TouchableOpacity style={styles.dateTimeButton}>
-            <Calendar size={20} color={Colors.primary} />
-            <Text style={styles.dateTimeText}>{formatDate(date)}</Text>
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.label}>Hora</Text>
-          <TouchableOpacity style={styles.dateTimeButton}>
-            <Clock size={20} color={Colors.primary} />
-            <Text style={styles.dateTimeText}>{formatTime(time)}</Text>
-          </TouchableOpacity>
+          <Text style={styles.label}>Data e Hora</Text>
+          <DatePicker
+            label="Date & Time"
+            mode="datetime"
+            value={dateTime}
+            onChange={setDateTime}
+            minimumDate={new Date()}
+            placeholder="Seleciona a hora e a data"
+            timeFormat="24"
+          />
         </View>
 
         <View style={styles.section}>
@@ -240,13 +282,19 @@ export default function AddReminderScreen() {
         <TouchableOpacity
           style={[
             styles.saveButton,
-            !title.trim() && styles.saveButtonDisabled,
+            (!title.trim() || isAddingReminder) && styles.saveButtonDisabled,
           ]}
           onPress={handleSave}
-          disabled={!title.trim()}
+          disabled={!title.trim() || isAddingReminder}
         >
-          <Bell size={20} color="#FFFFFF" />
-          <Text style={styles.saveButtonText}>Criar Lembrete</Text>
+          {isAddingReminder ? (
+            <Spinner />
+          ) : (
+            <>
+              <Bell size={20} color="#FFFFFF" />
+              <Text style={styles.saveButtonText}>Criar Lembrete</Text>
+            </>
+          )}
         </TouchableOpacity>
       </ScrollView>
     </>

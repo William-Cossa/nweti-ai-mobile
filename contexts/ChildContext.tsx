@@ -13,12 +13,12 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import * as childrenService from "../src/services/children";
 import * as growthService from "../src/services/growth";
+import * as prescriptionService from "../src/services/prescription";
+import * as reminderService from "../src/services/reminder";
+import * as vaccinationService from "../src/services/vaccination";
 
 const STORAGE_KEYS = {
-  VACCINATIONS: "@health_app_vaccinations",
-  PRESCRIPTIONS: "@health_app_prescriptions",
   RECOMMENDATIONS: "@health_app_recommendations",
-  REMINDERS: "@health_app_reminders",
 };
 
 export const [ChildProvider, useChild] = createContextHook(() => {
@@ -30,34 +30,10 @@ export const [ChildProvider, useChild] = createContextHook(() => {
     queryFn: childrenService.getAllChildren,
   });
 
-  const vaccinationsQuery = useQuery({
-    queryKey: ["vaccinations"],
-    queryFn: async () => {
-      const stored = await AsyncStorage.getItem(STORAGE_KEYS.VACCINATIONS);
-      return stored ? JSON.parse(stored) : [];
-    },
-  });
-
-  const prescriptionsQuery = useQuery({
-    queryKey: ["prescriptions"],
-    queryFn: async () => {
-      const stored = await AsyncStorage.getItem(STORAGE_KEYS.PRESCRIPTIONS);
-      return stored ? JSON.parse(stored) : [];
-    },
-  });
-
   const recommendationsQuery = useQuery({
     queryKey: ["recommendations"],
     queryFn: async () => {
       const stored = await AsyncStorage.getItem(STORAGE_KEYS.RECOMMENDATIONS);
-      return stored ? JSON.parse(stored) : [];
-    },
-  });
-
-  const remindersQuery = useQuery({
-    queryKey: ["reminders"],
-    queryFn: async () => {
-      const stored = await AsyncStorage.getItem(STORAGE_KEYS.REMINDERS);
       return stored ? JSON.parse(stored) : [];
     },
   });
@@ -69,11 +45,29 @@ export const [ChildProvider, useChild] = createContextHook(() => {
   const selectedChild =
     children.find((c: Child) => c.id === selectedChildId) || children[0];
 
+  const remindersQuery = useQuery({
+    queryKey: ["reminders", selectedChild?.id],
+    queryFn: () => reminderService.getReminders(selectedChild!.id),
+    enabled: !!selectedChild,
+  });
   const growthQuery = useQuery({
     queryKey: ["growth", selectedChild?.id],
     queryFn: () => growthService.getGrowthRecords(selectedChild!.id),
     enabled: !!selectedChild,
   });
+  const vaccinationsQuery = useQuery({
+    queryKey: ["vaccinations", selectedChild?.id],
+    queryFn: () => vaccinationService.getVaccinationRecords(selectedChild!.id),
+    enabled: !!selectedChild,
+  });
+
+  const prescriptionsQuery = useQuery({
+    queryKey: ["prescriptions", selectedChild?.id],
+    queryFn: () =>
+      prescriptionService.getPrescriptionsByChildId(selectedChild!.id),
+    enabled: !!selectedChild,
+  });
+
   const growthRecords = useMemo(
     () => growthQuery.data || [],
     [growthQuery.data]
@@ -115,6 +109,13 @@ export const [ChildProvider, useChild] = createContextHook(() => {
     },
   });
 
+  const deleteChildMutation = useMutation({
+    mutationFn: childrenService.deleteChild,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["children"] });
+    },
+  });
+
   const addGrowthRecordMutation = useMutation({
     mutationFn: (record: GrowthRecord) =>
       growthService.addGrowthRecord(selectedChild!.id, record),
@@ -125,77 +126,51 @@ export const [ChildProvider, useChild] = createContextHook(() => {
     },
   });
 
-  const addVaccinationMutation = useMutation({
-    mutationFn: async (vaccination: VaccinationRecord) => {
-      const updated = [...vaccinations, vaccination];
-      await AsyncStorage.setItem(
-        STORAGE_KEYS.VACCINATIONS,
-        JSON.stringify(updated)
-      );
-      return updated;
-    },
+  const updateVaccinationRecordMutation = useMutation({
+    mutationFn: ({
+      id,
+      record,
+    }: {
+      id: string;
+      record: Partial<VaccinationRecord>;
+    }) => vaccinationService.updateVaccinationRecord(id, record),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["vaccinations"] });
-    },
-  });
-
-  const updateVaccinationMutation = useMutation({
-    mutationFn: async (vaccination: VaccinationRecord) => {
-      const updated = vaccinations.map((v: VaccinationRecord) =>
-        v.id === vaccination.id ? vaccination : v
-      );
-      await AsyncStorage.setItem(
-        STORAGE_KEYS.VACCINATIONS,
-        JSON.stringify(updated)
-      );
-      return updated;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["vaccinations"] });
+      queryClient.invalidateQueries({
+        queryKey: ["vaccinations", selectedChild?.id],
+      });
     },
   });
 
   const addPrescriptionMutation = useMutation({
-    mutationFn: async (prescription: Prescription) => {
-      const updated = [...prescriptions, prescription];
-      await AsyncStorage.setItem(
-        STORAGE_KEYS.PRESCRIPTIONS,
-        JSON.stringify(updated)
-      );
-      return updated;
-    },
+    mutationFn: prescriptionService.createPrescription,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["prescriptions"] });
+      queryClient.invalidateQueries({
+        queryKey: ["prescriptions", selectedChild?.id],
+      });
     },
   });
 
   const updatePrescriptionMutation = useMutation({
-    mutationFn: async (prescription: Prescription) => {
-      const updated = prescriptions.map((p: Prescription) =>
-        p.id === prescription.id ? prescription : p
-      );
-      await AsyncStorage.setItem(
-        STORAGE_KEYS.PRESCRIPTIONS,
-        JSON.stringify(updated)
-      );
-      return updated;
-    },
+    mutationFn: ({
+      id,
+      prescription,
+    }: {
+      id: string;
+      prescription: Partial<Prescription>;
+    }) => prescriptionService.updatePrescription(id, prescription),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["prescriptions"] });
+      queryClient.invalidateQueries({
+        queryKey: ["prescriptions", selectedChild?.id],
+      });
     },
   });
 
   const deletePrescriptionMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const updated = prescriptions.filter((p: Prescription) => p.id !== id);
-      await AsyncStorage.setItem(
-        STORAGE_KEYS.PRESCRIPTIONS,
-        JSON.stringify(updated)
-      );
-      return updated;
-    },
+    mutationFn: prescriptionService.deletePrescription,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["prescriptions"] });
+      queryClient.invalidateQueries({
+        queryKey: ["prescriptions", selectedChild?.id],
+      });
     },
   });
 
@@ -230,62 +205,35 @@ export const [ChildProvider, useChild] = createContextHook(() => {
   });
 
   const addReminderMutation = useMutation({
-    mutationFn: async (reminder: Reminder) => {
-      const updated = [...reminders, reminder];
-      await AsyncStorage.setItem(
-        STORAGE_KEYS.REMINDERS,
-        JSON.stringify(updated)
-      );
-      return updated;
-    },
+    mutationFn: reminderService.createReminder,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["reminders"] });
+      queryClient.invalidateQueries({
+        queryKey: ["reminders", selectedChild?.id],
+      });
     },
   });
 
   const updateReminderMutation = useMutation({
-    mutationFn: async (reminder: Reminder) => {
-      const updated = reminders.map((r: Reminder) =>
-        r.id === reminder.id ? reminder : r
-      );
-      await AsyncStorage.setItem(
-        STORAGE_KEYS.REMINDERS,
-        JSON.stringify(updated)
-      );
-      return updated;
-    },
+    mutationFn: ({
+      id,
+      reminder,
+    }: {
+      id: string;
+      reminder: Partial<Reminder>;
+    }) => reminderService.updateReminder(id, reminder),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["reminders"] });
+      queryClient.invalidateQueries({
+        queryKey: ["reminders", selectedChild?.id],
+      });
     },
   });
 
   const deleteReminderMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const updated = reminders.filter((r: Reminder) => r.id !== id);
-      await AsyncStorage.setItem(
-        STORAGE_KEYS.REMINDERS,
-        JSON.stringify(updated)
-      );
-      return updated;
-    },
+    mutationFn: reminderService.deleteReminder,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["reminders"] });
-    },
-  });
-
-  const toggleReminderCompletedMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const updated = reminders.map((r: Reminder) =>
-        r.id === id ? { ...r, isCompleted: !r.isCompleted } : r
-      );
-      await AsyncStorage.setItem(
-        STORAGE_KEYS.REMINDERS,
-        JSON.stringify(updated)
-      );
-      return updated;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["reminders"] });
+      queryClient.invalidateQueries({
+        queryKey: ["reminders", selectedChild?.id],
+      });
     },
   });
 
@@ -346,19 +294,22 @@ export const [ChildProvider, useChild] = createContextHook(() => {
       setSelectedChildId,
       addChild: addChildMutation.mutate,
       updateChild: updateChildMutation.mutate,
+      deleteChild: deleteChildMutation.mutate,
       addGrowthRecord: addGrowthRecordMutation.mutate,
       isAddingGrowthRecord: addGrowthRecordMutation.isPending,
-      addVaccination: addVaccinationMutation.mutate,
-      updateVaccination: updateVaccinationMutation.mutate,
+      updateVaccinationRecord: updateVaccinationRecordMutation.mutate,
+      isUpdatingVaccinationRecord: updateVaccinationRecordMutation.isPending,
       addPrescription: addPrescriptionMutation.mutate,
       updatePrescription: updatePrescriptionMutation.mutate,
       deletePrescription: deletePrescriptionMutation.mutate,
       addRecommendation: addRecommendationMutation.mutate,
       markRecommendationRead: markRecommendationReadMutation.mutate,
       addReminder: addReminderMutation.mutate,
+      isAddingReminder: addReminderMutation.isPending,
       updateReminder: updateReminderMutation.mutate,
+      isUpdatingReminder: updateReminderMutation.isPending,
       deleteReminder: deleteReminderMutation.mutate,
-      toggleReminderCompleted: toggleReminderCompletedMutation.mutate,
+      isDeletingReminder: deleteReminderMutation.isPending,
       getChildGrowthRecords,
       getChildVaccinations,
       getChildPrescriptions,
@@ -378,19 +329,22 @@ export const [ChildProvider, useChild] = createContextHook(() => {
       selectedChildId,
       addChildMutation.mutate,
       updateChildMutation.mutate,
+      deleteChildMutation.mutate,
       addGrowthRecordMutation.mutate,
       addGrowthRecordMutation.isPending,
-      addVaccinationMutation.mutate,
-      updateVaccinationMutation.mutate,
+      updateVaccinationRecordMutation.mutate,
+      updateVaccinationRecordMutation.isPending,
       addPrescriptionMutation.mutate,
       updatePrescriptionMutation.mutate,
       deletePrescriptionMutation.mutate,
       addRecommendationMutation.mutate,
       markRecommendationReadMutation.mutate,
       addReminderMutation.mutate,
+      addReminderMutation.isPending,
       updateReminderMutation.mutate,
+      updateReminderMutation.isPending,
       deleteReminderMutation.mutate,
-      toggleReminderCompletedMutation.mutate,
+      deleteReminderMutation.isPending,
       getChildGrowthRecords,
       getChildVaccinations,
       getChildPrescriptions,
